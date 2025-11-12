@@ -111,7 +111,11 @@ export default function Dashboard() {
   // Show error state
   if (error) {
     return (
-      <ErrorState message="Failed to load analytics data" onRetry={refetch} />
+      <ErrorState
+        message="Failed to load analytics data"
+        onRetry={refetch}
+        loading={isLoading}
+      />
     );
   }
 
@@ -230,50 +234,30 @@ export default function Dashboard() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <motion.div
-          whileHover={{ scale: 1.02, y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <StatCard
-            label="Total Sessions"
-            value={totalSessions}
-            icon={<ChartBar size={28} weight="duotone" />}
-            gradient="from-blue-500 to-cyan-500"
-          />
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.02, y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <StatCard
-            label="Unique Users"
-            value={uniqueUsers}
-            icon={<Users size={28} weight="duotone" />}
-            gradient="from-purple-500 to-pink-500"
-          />
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.02, y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <StatCard
-            label="Avg Intent Score"
-            value={`${avgIntentScore}%`}
-            icon={<TrendUp size={28} weight="duotone" />}
-            gradient="from-emerald-500 to-teal-500"
-          />
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.02, y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <StatCard
-            label="High Intent Users"
-            value={highIntentUsers}
-            icon={<Star size={28} weight="duotone" />}
-            gradient="from-orange-500 to-red-500"
-          />
-        </motion.div>
+        <StatCard
+          label="Total Sessions"
+          value={totalSessions}
+          icon={<ChartBar size={28} weight="duotone" />}
+          gradient="from-blue-500 to-cyan-500"
+        />
+        <StatCard
+          label="Unique Users"
+          value={uniqueUsers}
+          icon={<Users size={28} weight="duotone" />}
+          gradient="from-purple-500 to-pink-500"
+        />
+        <StatCard
+          label="Avg Intent Score"
+          value={`${avgIntentScore}%`}
+          icon={<TrendUp size={28} weight="duotone" />}
+          gradient="from-emerald-500 to-teal-500"
+        />
+        <StatCard
+          label="High Intent Users"
+          value={highIntentUsers}
+          icon={<Star size={28} weight="duotone" />}
+          gradient="from-orange-500 to-red-500"
+        />
       </motion.div>
 
       {/* Intent Filter */}
@@ -308,10 +292,10 @@ export default function Dashboard() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIntentFilter(level)}
-                className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-all border-2 ${
                   intentFilter === level
                     ? "text-white dark:text-gray-900 shadow-lg"
-                    : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
+                    : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm  border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
                 }`}
                 style={
                   intentFilter === level

@@ -150,8 +150,35 @@ export default function PublicAgentView() {
     );
   }
 
-  const gradientBg = getGradient(theme, "primary");
-  const textColor = getContrastTextColor(theme);
+  // Get styling configuration - use personalization if available, otherwise fall back to theme
+  const getStyleConfig = () => {
+    if (agent?.personalization) {
+      const p = agent.personalization;
+      return {
+        headerGradient: `linear-gradient(to right, ${p.headerGradientStart}, ${p.headerGradientEnd})`,
+        chatBackground: p.chatBackgroundColor,
+        senderMessageColor: p.senderMessageBackgroundColor || "#2563eb",
+        incomingMessageColor: p.incomingMessageBackgroundColor || "#f1f5f9",
+        sendButtonColor: p.sendButtonBackgroundColor || "#2563eb",
+        agentAvatar: p.agentAvatar,
+        // For text contrast, we'll use white for dark gradients and dark for light gradients
+        textColor: "#ffffff", // Most gradients work better with white text
+      };
+    } else {
+      // Fallback to theme-based styling
+      return {
+        headerGradient: getGradient(theme, "primary"),
+        chatBackground: "#ffffff",
+        senderMessageColor: getGradient(theme, "primary"),
+        incomingMessageColor: "#f1f5f9",
+        sendButtonColor: getGradient(theme, "primary"),
+        agentAvatar: null,
+        textColor: getContrastTextColor(theme),
+      };
+    }
+  };
+
+  const styleConfig = getStyleConfig();
 
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex items-center justify-center p-4 overflow-hidden">
@@ -171,14 +198,22 @@ export default function PublicAgentView() {
             {/* Gradient Background */}
             <div
               className="absolute inset-0 opacity-90"
-              style={{ backgroundImage: gradientBg }}
+              style={{ backgroundImage: styleConfig.headerGradient }}
             ></div>
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
 
             <div className="relative p-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                  <Robot size={24} weight="duotone" className="text-white" />
+                  {styleConfig.agentAvatar ? (
+                    <img
+                      src={styleConfig.agentAvatar}
+                      alt="Agent Avatar"
+                      className="w-full h-full rounded-xl object-cover"
+                    />
+                  ) : (
+                    <Robot size={24} weight="duotone" className="text-white" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl font-bold text-white mb-1 truncate">
@@ -223,25 +258,25 @@ export default function PublicAgentView() {
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.3, type: "spring" }}
                     className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
-                    style={{ backgroundImage: gradientBg }}
+                    style={{ backgroundImage: styleConfig.headerGradient }}
                   >
                     <Robot
                       size={40}
                       weight="duotone"
-                      style={{ color: textColor }}
+                      style={{ color: styleConfig.textColor }}
                     />
                   </motion.div>
                   <h2
                     className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r"
-                    style={{ backgroundImage: gradientBg }}
+                    style={{ backgroundImage: styleConfig.headerGradient }}
                   >
                     Welcome!
                   </h2>
                   <p className="text-gray-700 dark:text-gray-300 text-base">
-                    Enter your name to start chatting with
+                    Enter your name to start chatting with{" "}
                     <span
                       className="font-semibold bg-clip-text text-transparent bg-gradient-to-r"
-                      style={{ backgroundImage: gradientBg }}
+                      style={{ backgroundImage: styleConfig.headerGradient }}
                     >
                       {agent.name}
                     </span>
@@ -271,7 +306,10 @@ export default function PublicAgentView() {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleStartChat}
                     className="w-full px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                    style={{ backgroundImage: gradientBg, color: textColor }}
+                    style={{
+                      backgroundImage: styleConfig.headerGradient,
+                      color: styleConfig.textColor,
+                    }}
                   >
                     <span>Start Chat</span>
                     <PaperPlaneRight size={20} weight="fill" />
@@ -282,17 +320,20 @@ export default function PublicAgentView() {
           ) : (
             <>
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-900">
+              <div
+                className="flex-1 overflow-y-auto p-4 space-y-3"
+                style={{ backgroundColor: styleConfig.chatBackground }}
+              >
                 {messages.length === 0 && !currentMessage ? (
                   <div className="flex flex-col items-center justify-center h-full text-center">
                     <div
                       className="w-16 h-16 rounded-xl opacity-10 dark:opacity-20 flex items-center justify-center mb-3"
-                      style={{ backgroundImage: gradientBg }}
+                      style={{ backgroundImage: styleConfig.headerGradient }}
                     >
                       <Robot
                         size={32}
                         weight="duotone"
-                        style={{ color: textColor }}
+                        style={{ color: styleConfig.textColor }}
                       />
                     </div>
                     <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
@@ -314,28 +355,42 @@ export default function PublicAgentView() {
                         {msg.role === "assistant" && (
                           <div
                             className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                            style={{ backgroundImage: gradientBg }}
+                            style={{
+                              backgroundImage: styleConfig.headerGradient,
+                            }}
                           >
-                            <Robot
-                              size={16}
-                              weight="duotone"
-                              style={{ color: textColor }}
-                            />
+                            {styleConfig.agentAvatar ? (
+                              <img
+                                src={styleConfig.agentAvatar}
+                                alt="Agent"
+                                className="w-full h-full rounded-lg object-cover"
+                              />
+                            ) : (
+                              <Robot
+                                size={16}
+                                weight="duotone"
+                                style={{ color: styleConfig.textColor }}
+                              />
+                            )}
                           </div>
                         )}
                         <div
                           className={`max-w-[70%] px-3 py-2 rounded-xl shadow-sm ${
                             msg.role === "user"
                               ? ""
-                              : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
+                              : "text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
                           }`}
                           style={
                             msg.role === "user"
                               ? {
-                                  backgroundImage: gradientBg,
-                                  color: textColor,
+                                  backgroundColor:
+                                    styleConfig.senderMessageColor,
+                                  color: "#ffffff",
                                 }
-                              : {}
+                              : {
+                                  backgroundColor:
+                                    styleConfig.incomingMessageColor,
+                                }
                           }
                         >
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -374,22 +429,39 @@ export default function PublicAgentView() {
                       >
                         <div
                           className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ backgroundImage: gradientBg }}
+                          style={{
+                            backgroundImage: styleConfig.headerGradient,
+                          }}
                         >
-                          <Robot
-                            size={16}
-                            weight="duotone"
-                            style={{ color: textColor }}
-                          />
+                          {styleConfig.agentAvatar ? (
+                            <img
+                              src={styleConfig.agentAvatar}
+                              alt="Agent"
+                              className="w-full h-full rounded-lg object-cover"
+                            />
+                          ) : (
+                            <Robot
+                              size={16}
+                              weight="duotone"
+                              style={{ color: styleConfig.textColor }}
+                            />
+                          )}
                         </div>
-                        <div className="max-w-[70%] px-3 py-2 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div
+                          className="max-w-[70%] px-3 py-2 rounded-xl text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm"
+                          style={{
+                            backgroundColor: styleConfig.incomingMessageColor,
+                          }}
+                        >
                           <p className="text-sm leading-relaxed whitespace-pre-wrap">
                             {currentMessage}
                             <motion.span
                               animate={{ opacity: [1, 0] }}
                               transition={{ duration: 0.8, repeat: Infinity }}
                               className="inline-block w-0.5 h-3.5 ml-0.5"
-                              style={{ backgroundImage: gradientBg }}
+                              style={{
+                                backgroundImage: styleConfig.headerGradient,
+                              }}
                             >
                               ▋
                             </motion.span>
@@ -427,7 +499,10 @@ export default function PublicAgentView() {
                     onClick={handleSendMessage}
                     disabled={!userMessage.trim() || streaming}
                     className="px-3 py-2.5 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[42px]"
-                    style={{ backgroundImage: gradientBg, color: textColor }}
+                    style={{
+                      backgroundColor: styleConfig.sendButtonColor,
+                      color: "#ffffff",
+                    }}
                   >
                     {streaming ? (
                       <motion.div

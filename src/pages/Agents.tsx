@@ -180,9 +180,7 @@ export default function Agents() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    Assistant ID
-                  </th>
+
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Created
                   </th>
@@ -246,11 +244,7 @@ export default function Agents() {
                           {agent.isDeleted ? "Inactive" : "Active"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-1.5 py-0.5 rounded font-mono">
-                          {agent.assistantId.slice(0, 12)}...
-                        </code>
-                      </td>
+
                       <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                         {new Date(agent.createdAt).toLocaleDateString("en-US", {
                           month: "short",
@@ -289,7 +283,9 @@ export default function Agents() {
                             />
                           </button>
                           <button
-                            onClick={() => navigate(`/agent/${agent.id}`)}
+                            onClick={() =>
+                              window.open(`/agent/${agent.id}`, "_blank")
+                            }
                             title="View public page"
                             className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
                           >

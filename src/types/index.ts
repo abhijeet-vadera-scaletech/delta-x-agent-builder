@@ -22,6 +22,8 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  company?: string;
+  bio?: string;
   role: "consultant" | "admin" | "user";
   createdAt: string;
   updatedAt: string;
@@ -45,6 +47,18 @@ export interface RegisterResponse {
   user: User;
 }
 
+// Profile Types
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  bio?: string;
+}
+
+export interface UploadImageResponse {
+  imageUrl: string;
+}
+
 // Agent Types
 export interface Agent {
   id: string;
@@ -58,12 +72,15 @@ export interface Agent {
   model: string;
   vectorStoreId?: string;
   hasFileSearch: boolean;
+  personalizationId?: string;
   tools?: Array<{ type: string }>;
   metadata?: Record<string, any>;
   isDeleted: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string;
+  personalization?: Personalization;
+  user?: User;
 }
 
 export interface CreateAgentRequest {
@@ -76,6 +93,7 @@ export interface CreateAgentRequest {
   model?: string;
   hasFileSearch?: boolean;
   vectorStoreId?: string;
+  personalizationId?: string;
 }
 
 export interface UpdateAgentRequest {
@@ -86,6 +104,7 @@ export interface UpdateAgentRequest {
   tone?: string;
   personality?: string;
   vectorStoreId?: string;
+  personalizationId?: string | null;
 }
 
 export interface AgentStats {
@@ -152,7 +171,7 @@ export interface SendMessageRequest {
 }
 
 export interface StreamEvent {
-  type: 
+  type:
     | "session"
     | "thread"
     | "thread.run.created"
@@ -184,4 +203,77 @@ export interface StreamEvent {
       };
     }>;
   };
+}
+
+// Personalization Types
+export interface Personalization extends PersonalizationConfig {
+  id: string;
+  attachedAgents?: Array<{
+    id: string;
+    name: string;
+  }>;
+  agentCount?: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonalizationConfig {
+  name?: string;
+  headerGradientStart: string;
+  headerGradientEnd: string;
+  chatBackgroundColor: string;
+  senderMessageBackgroundColor: string; // Background color for sender messages
+  incomingMessageBackgroundColor: string; // Background color for incoming messages
+  sendButtonBackgroundColor: string; // Background color for send button
+  agentAvatar?: string;
+  // Optional text colors (will use defaults if not provided)
+  senderMessageTextColor?: string;
+  incomingMessageTextColor?: string;
+  sendButtonTextColor?: string;
+  inputBackgroundColor?: string;
+  inputTextColor?: string;
+}
+
+export interface CreatePersonalizationRequest {
+  name: string;
+  agentAvatar?: string;
+  headerGradientStart: string;
+  headerGradientEnd: string;
+  senderMessageBackgroundColor: string;
+  incomingMessageBackgroundColor: string;
+  sendButtonBackgroundColor: string;
+  chatBackgroundColor: string;
+  inputBackgroundColor: string;
+  inputTextColor: string;
+  incomingMessageTextColor: string;
+  senderMessageTextColor: string;
+  sendButtonTextColor: string;
+  agentIds?: string[]; // Array of agent IDs to attach this personalization to
+}
+
+export interface UpdatePersonalizationRequest {
+  name?: string;
+  agentAvatar?: string;
+  headerGradientStart?: string;
+  headerGradientEnd?: string;
+  senderMessageBackgroundColor?: string;
+  incomingMessageBackgroundColor?: string;
+  sendButtonBackgroundColor?: string;
+  chatBackgroundColor?: string;
+  inputBackgroundColor?: string;
+  inputTextColor?: string;
+  incomingMessageTextColor?: string;
+  senderMessageTextColor?: string;
+  sendButtonTextColor?: string;
+  agentIds?: string[]; // Array of agent IDs to attach this personalization to
+}
+
+// AI Enhancement Types
+export interface EnhancePromptRequest {
+  userContext: string;
+}
+
+export interface EnhancePromptResponse {
+  enhancedInstruction: string;
 }

@@ -41,6 +41,10 @@ export const API_CONFIG = {
     chatThreads: (agentId: string) => `/api/chat/threads/${agentId}`,
     chatThread: (threadId: string) => `/api/chat/thread/${threadId}`,
     chatStats: (agentId: string) => `/api/chat/stats/${agentId}`,
+
+    // Personalization
+    personalizations: "/api/personalizations",
+    personalization: (id: string) => `/api/personalizations/${id}`,
   },
 };
 

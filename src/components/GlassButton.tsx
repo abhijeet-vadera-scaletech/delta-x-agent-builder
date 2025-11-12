@@ -6,7 +6,14 @@ import { getGradient } from "../config/theme";
 interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   className?: string;
-  variant?: "default" | "primary" | "secondary" | "accent1" | "accent2" | "danger" | "gradient";
+  variant?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "accent1"
+    | "accent2"
+    | "danger"
+    | "gradient";
   useGradient?: boolean;
 }
 
@@ -61,7 +68,8 @@ export function GlassButton({
       className={cn(
         "relative rounded-xl",
         // Enhanced borders for better distinction
-        !isGradientButton && "border-2 border-gray-200/80 dark:border-gray-700/80",
+        !isGradientButton &&
+          "border-2 border-gray-200/80 dark:border-gray-700/80",
         !isGradientButton && "ring-1 ring-white/40 dark:ring-white/10",
         // Glass effect
         !isGradientButton && "bg-white/90 dark:bg-gray-800/90",
@@ -71,8 +79,10 @@ export function GlassButton({
         // Hover effects
         "transition-all duration-300",
         !disabled &&
-          "hover:shadow-2xl hover:shadow-gray-400/40 dark:hover:shadow-black/60 hover:-translate-y-1",
-        !disabled && !isGradientButton && "hover:border-gray-300/80 dark:hover:border-gray-600/80",
+          "hover:shadow-2xl hover:shadow-gray-600/40 dark:hover:shadow-black/80",
+        !disabled &&
+          !isGradientButton &&
+          "hover:border-gray-300/80 dark:hover:border-gray-600/80",
         // Active state
         !disabled && "active:translate-y-0 active:shadow-lg",
         // Disabled state

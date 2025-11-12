@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, Bell, Trash, FloppyDisk, UserCircle } from "phosphor-react";
+import { Lock, Bell, Trash, FloppyDisk, UserCircle, Palette } from "phosphor-react";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { showToast } from "../utils/toast";
@@ -16,7 +16,7 @@ export default function Settings() {
   const gradientBg = getGradient(theme, "primary");
 
   const [activeTab, setActiveTab] = useState<
-    "account" | "notifications" | "security"
+    "account" | "notifications" | "security" | "personalization"
   >("account");
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -101,7 +101,7 @@ export default function Settings() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="flex gap-3 flex-wrap"
       >
-        {(["account", "notifications", "security"] as const).map((tab) => (
+        {(["account", "notifications", "security", "personalization"] as const).map((tab) => (
           <motion.button
             key={tab}
             whileHover={{ scale: 1.02 }}
@@ -329,6 +329,43 @@ export default function Settings() {
                 </GlassButton>
               </div>
             </form>
+          </GlassCard>
+        </motion.div>
+      )}
+
+      {/* Personalization Tab */}
+      {activeTab === "personalization" && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <GlassCard>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+              <Palette size={24} weight="duotone" />
+              Chat Personalizations
+            </h3>
+            <div className="text-center py-8">
+              <Palette
+                size={48}
+                weight="duotone"
+                className="mx-auto text-gray-400 dark:text-gray-600 mb-4"
+              />
+              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Personalization Management
+              </h4>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Create and manage chat personalizations for your agents
+              </p>
+              <GlassButton
+                onClick={() => navigate("/personalization")}
+                className="flex items-center gap-2 mx-auto"
+                variant="gradient"
+              >
+                <Palette size={20} weight="duotone" />
+                Manage Personalizations
+              </GlassButton>
+            </div>
           </GlassCard>
         </motion.div>
       )}

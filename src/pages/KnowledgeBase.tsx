@@ -1,31 +1,34 @@
 import { motion } from "framer-motion";
 import {
   Book,
+  Files,
+  FloppyDisk,
+  PencilSimple,
   Plus,
   Trash,
-  PencilSimple,
-  X,
-  FloppyDisk,
-  Files,
   UploadSimple,
+  X,
 } from "phosphor-react";
 import { useState } from "react";
-import { showToast } from "../utils/toast";
-import { useTheme } from "../context/ThemeContext";
-import { getGradient } from "../config/theme";
-import { GlassCard, StatCard } from "../components/GlassCard";
-import { GlassButton } from "../components/GlassButton";
-import LoadingSpinner from "../components/LoadingSpinner";
+import Select from "react-select";
 import ErrorState from "../components/ErrorState";
+import { GlassButton } from "../components/GlassButton";
+import { GlassCard, StatCard } from "../components/GlassCard";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { getGradient } from "../config/theme";
+import { useTheme } from "../context/ThemeContext";
 import {
-  useGetKnowledgeBases,
   useCreateKnowledgeBase,
-  useUpdateKnowledgeBase,
   useDeleteKnowledgeBase,
+  useGetKnowledgeBases,
+  useUpdateAgent,
+  useUpdateKnowledgeBase,
   useUploadFile,
   type KnowledgeBase,
   type UploadedFile,
 } from "../hooks";
+import { useGetAgents } from "../hooks/get/useGetAgents";
+import { showToast } from "../utils/toast";
 
 export default function KnowledgeBase() {
   const { theme } = useTheme();
@@ -42,6 +45,10 @@ export default function KnowledgeBase() {
   const updateKBMutation = useUpdateKnowledgeBase();
   const deleteKBMutation = useDeleteKnowledgeBase();
   const uploadFileMutation = useUploadFile();
+  const updateAgentMutation = useUpdateAgent();
+
+  // Fetch agents
+  const { data: agents = [] } = useGetAgents();
 
   // Local state
   const [selectedKB, setSelectedKB] = useState<KnowledgeBase | null>(null);
@@ -49,6 +56,7 @@ export default function KnowledgeBase() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
 
   // Calculate stats
   const totalKBs = knowledgeBases.length;
@@ -87,15 +95,28 @@ export default function KnowledgeBase() {
       const fileIds = uploadedFiles.map((file: UploadedFile) => file.id);
 
       // Create knowledge base with file IDs
-      await createKBMutation.mutateAsync({
+      const newKB = await createKBMutation.mutateAsync({
         name: formData.name,
         description: formData.description,
         fileIds,
       });
 
+      // Update selected agents with the new KB's vectorStoreId
+      if (selectedAgents.length > 0 && newKB.vectorStoreId) {
+        showToast.info("Assigning knowledge base to agents...");
+        const updatePromises = selectedAgents.map((agentId) =>
+          updateAgentMutation.mutateAsync({
+            id: agentId,
+            data: { vectorStoreId: newKB.vectorStoreId },
+          })
+        );
+        await Promise.all(updatePromises);
+      }
+
       showToast.success("Knowledge Base created successfully! 🎉");
       setFormData({ name: "", description: "" });
       setSelectedFiles([]);
+      setSelectedAgents([]);
       setShowCreateModal(false);
     } catch (err) {
       showToast.error("Failed to create knowledge base");
@@ -121,7 +142,7 @@ export default function KnowledgeBase() {
         fileIds = uploadedFiles.map((file: UploadedFile) => file.id);
       }
 
-      await updateKBMutation.mutateAsync({
+      const updatedKB = await updateKBMutation.mutateAsync({
         id: selectedKB.id,
         data: {
           name: formData.name,
@@ -129,9 +150,46 @@ export default function KnowledgeBase() {
           ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
         },
       });
+
+      // Update agent assignments
+      // First, remove KB from agents that are no longer selected
+      const currentAgentsUsingKB = agents
+        .filter((agent) => agent.vectorStoreId === selectedKB.vectorStoreId)
+        .map((agent) => agent.id);
+
+      const agentsToRemove = currentAgentsUsingKB.filter(
+        (agentId) => !selectedAgents.includes(agentId)
+      );
+      const agentsToAdd = selectedAgents.filter(
+        (agentId) => !currentAgentsUsingKB.includes(agentId)
+      );
+
+      if (agentsToRemove.length > 0 || agentsToAdd.length > 0) {
+        showToast.info("Updating agent assignments...");
+
+        // Remove KB from deselected agents
+        const removePromises = agentsToRemove.map((agentId) =>
+          updateAgentMutation.mutateAsync({
+            id: agentId,
+            data: { vectorStoreId: undefined },
+          })
+        );
+
+        // Add KB to newly selected agents
+        const addPromises = agentsToAdd.map((agentId) =>
+          updateAgentMutation.mutateAsync({
+            id: agentId,
+            data: { vectorStoreId: updatedKB.vectorStoreId },
+          })
+        );
+
+        await Promise.all([...removePromises, ...addPromises]);
+      }
+
       showToast.success("Knowledge Base updated successfully! ✨");
       setFormData({ name: "", description: "" });
       setSelectedFiles([]);
+      setSelectedAgents([]);
       setShowEditModal(false);
       setSelectedKB(null);
     } catch (err) {
@@ -159,6 +217,13 @@ export default function KnowledgeBase() {
     setSelectedKB(kb);
     setFormData({ name: kb.name, description: kb.description || "" });
     setSelectedFiles([]);
+
+    // Load agents that are currently using this KB
+    const agentsUsingKB = agents
+      .filter((agent) => agent.vectorStoreId === kb.vectorStoreId)
+      .map((agent) => agent.id);
+    setSelectedAgents(agentsUsingKB);
+
     setShowEditModal(true);
   };
 
@@ -407,7 +472,7 @@ export default function KnowledgeBase() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md"
+            className="w-full max-w-4xl"
           >
             <GlassCard>
               <div className="flex items-center justify-between mb-6">
@@ -419,6 +484,7 @@ export default function KnowledgeBase() {
                     setShowCreateModal(false);
                     setFormData({ name: "", description: "" });
                     setSelectedFiles([]);
+                    setSelectedAgents([]);
                   }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
@@ -427,101 +493,171 @@ export default function KnowledgeBase() {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g., Customer Support KB"
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Describe what this knowledge base contains..."
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                  />
-                </div>
-
-                {/* File Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Files * (PDF, TXT, DOC, etc.)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileSelect}
-                      accept=".pdf,.txt,.doc,.docx,.md"
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className="flex flex-col items-center cursor-pointer"
-                    >
-                      <UploadSimple
-                        size={32}
-                        weight="duotone"
-                        className="text-gray-400 dark:text-gray-600 mb-2"
+                {/* Grid Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="e.g., Customer Support KB"
+                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Click to upload files
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        Max 512MB per file
-                      </span>
-                    </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Describe what this knowledge base contains..."
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                      />
+                    </div>
+
+                    {/* Agent Selection - Multi-select Dropdown */}
+                    {agents.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                          Assign to Agents (Optional)
+                        </label>
+                        <Select
+                          isMulti
+                          options={agents
+                            .filter((agent) => !agent.isDeleted)
+                            .map((agent) => ({
+                              value: agent.id,
+                              label: agent.name,
+                              description: agent.description,
+                            }))}
+                          value={agents
+                            .filter((agent) => selectedAgents.includes(agent.id))
+                            .map((agent) => ({
+                              value: agent.id,
+                              label: agent.name,
+                              description: agent.description,
+                            }))}
+                          onChange={(selected) => {
+                            setSelectedAgents(selected ? selected.map((s) => s.value) : []);
+                          }}
+                          formatOptionLabel={(option) => (
+                            <div>
+                              <div className="font-medium">{option.label}</div>
+                              {option.description && (
+                                <div className="text-xs text-gray-500">
+                                  {option.description}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          placeholder="Select agents..."
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          theme={(theme) => ({
+                            ...theme,
+                            borderRadius: 12,
+                            colors: {
+                              ...theme.colors,
+                              primary: '#3b82f6',
+                              primary25: '#dbeafe',
+                              primary50: '#bfdbfe',
+                            },
+                          })}
+                        />
+                        {selectedAgents.length > 0 && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            {selectedAgents.length} agent
+                            {selectedAgents.length > 1 ? "s" : ""} selected
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Selected Files List */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {selectedFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  {/* Right Column - File Upload */}
+                  <div className="space-y-4">
+                    {/* File Upload */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Files * (PDF, TXT, DOC, etc.)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleFileSelect}
+                          accept=".pdf,.txt,.doc,.docx,.md"
+                          className="hidden"
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className="flex flex-col items-center cursor-pointer"
                         >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Files
-                              size={16}
-                              className="text-blue-600 dark:text-blue-400 flex-shrink-0"
-                            />
-                            <span className="text-sm text-gray-900 dark:text-white truncate">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveFile(index)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
-                          >
-                            <X
-                              size={16}
-                              className="text-red-600 dark:text-red-400"
-                            />
-                          </button>
+                          <UploadSimple
+                            size={32}
+                            weight="duotone"
+                            className="text-gray-400 dark:text-gray-600 mb-2"
+                          />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Click to upload files
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            Max 512MB per file
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* Selected Files List */}
+                      {selectedFiles.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {selectedFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Files
+                                  size={16}
+                                  className="text-blue-600 dark:text-blue-400 flex-shrink-0"
+                                />
+                                <span className="text-sm text-gray-900 dark:text-white truncate">
+                                  {file.name}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveFile(index)}
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                              >
+                                <X
+                                  size={16}
+                                  className="text-red-600 dark:text-red-400"
+                                />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -546,6 +682,7 @@ export default function KnowledgeBase() {
                       setShowCreateModal(false);
                       setFormData({ name: "", description: "" });
                       setSelectedFiles([]);
+                      setSelectedAgents([]);
                     }}
                     className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
@@ -563,7 +700,7 @@ export default function KnowledgeBase() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md"
+            className="w-full max-w-4xl"
           >
             <GlassCard>
               <div className="flex items-center justify-between mb-6">
@@ -575,6 +712,7 @@ export default function KnowledgeBase() {
                     setShowEditModal(false);
                     setSelectedKB(null);
                     setFormData({ name: "", description: "" });
+                    setSelectedAgents([]);
                   }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 >
@@ -583,142 +721,212 @@ export default function KnowledgeBase() {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g., Customer Support KB"
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Describe what this knowledge base contains..."
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                  />
-                </div>
-
-                {/* Existing Files */}
-                {selectedKB.files && selectedKB.files.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                      Current Files ({selectedKB.files.length})
-                    </label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                      {selectedKB.files.map((file) => (
-                        <div
-                          key={file.id}
-                          className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Files
-                              size={16}
-                              weight="duotone"
-                              className="text-blue-600 dark:text-blue-400 flex-shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
-                                {file.filename}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {(file.bytes / 1024).toFixed(1)} KB •{" "}
-                                {file.mimeType.split("/")[1].toUpperCase()}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Note: Existing files cannot be removed individually. Add
-                      new files below to update the knowledge base.
-                    </p>
-                  </div>
-                )}
-
-                {/* Add New Files */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Add New Files (Optional)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileSelect}
-                      accept=".pdf,.txt,.doc,.docx,.md"
-                      className="hidden"
-                      id="file-upload-edit"
-                    />
-                    <label
-                      htmlFor="file-upload-edit"
-                      className="flex flex-col items-center cursor-pointer"
-                    >
-                      <UploadSimple
-                        size={32}
-                        weight="duotone"
-                        className="text-gray-400 dark:text-gray-600 mb-2"
+                {/* Grid Layout for Name, Description, and Agent Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="e.g., Customer Support KB"
+                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Click to upload new files
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        Max 512MB per file
-                      </span>
-                    </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Describe what this knowledge base contains..."
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                      />
+                    </div>
+
+                    {/* Agent Selection - Multi-select Dropdown */}
+                    {agents.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                          Assign to Agents (Optional)
+                        </label>
+                        <Select
+                          isMulti
+                          options={agents
+                            .filter((agent) => !agent.isDeleted)
+                            .map((agent) => ({
+                              value: agent.id,
+                              label: agent.name,
+                              description: agent.description,
+                            }))}
+                          value={agents
+                            .filter((agent) => selectedAgents.includes(agent.id))
+                            .map((agent) => ({
+                              value: agent.id,
+                              label: agent.name,
+                              description: agent.description,
+                            }))}
+                          onChange={(selected) => {
+                            setSelectedAgents(selected ? selected.map((s) => s.value) : []);
+                          }}
+                          formatOptionLabel={(option) => (
+                            <div>
+                              <div className="font-medium">{option.label}</div>
+                              {option.description && (
+                                <div className="text-xs text-gray-500">
+                                  {option.description}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          placeholder="Select agents..."
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          theme={(theme) => ({
+                            ...theme,
+                            borderRadius: 12,
+                            colors: {
+                              ...theme.colors,
+                              primary: '#3b82f6',
+                              primary25: '#dbeafe',
+                              primary50: '#bfdbfe',
+                            },
+                          })}
+                        />
+                        {selectedAgents.length > 0 && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            {selectedAgents.length} agent
+                            {selectedAgents.length > 1 ? "s" : ""} selected
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* New Files List */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        New Files to Upload ({selectedFiles.length})
-                      </p>
-                      {selectedFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Files
-                              size={16}
-                              className="text-emerald-600 dark:text-emerald-400 flex-shrink-0"
-                            />
-                            <span className="text-sm text-gray-900 dark:text-white truncate">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveFile(index)}
-                            className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded transition-colors flex-shrink-0"
-                          >
-                            <X
-                              size={16}
-                              className="text-red-600 dark:text-red-400"
-                            />
-                          </button>
+                  {/* Right Column - File Upload */}
+                  <div className="space-y-4">
+                    {/* Existing Files */}
+                    {selectedKB.files && selectedKB.files.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                          Current Files ({selectedKB.files.length})
+                        </label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                          {selectedKB.files.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Files
+                                  size={16}
+                                  weight="duotone"
+                                  className="text-blue-600 dark:text-blue-400 flex-shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                                    {file.filename}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {(file.bytes / 1024).toFixed(1)} KB •{" "}
+                                    {file.mimeType.split("/")[1].toUpperCase()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Note: Existing files cannot be removed individually.
+                          Add new files below to update the knowledge base.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Add New Files */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                        Add New Files (Optional)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                        <input
+                          type="file"
+                          multiple
+                          onChange={handleFileSelect}
+                          accept=".pdf,.txt,.doc,.docx,.md"
+                          className="hidden"
+                          id="file-upload-edit"
+                        />
+                        <label
+                          htmlFor="file-upload-edit"
+                          className="flex flex-col items-center cursor-pointer"
+                        >
+                          <UploadSimple
+                            size={32}
+                            weight="duotone"
+                            className="text-gray-400 dark:text-gray-600 mb-2"
+                          />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Click to upload new files
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            Max 512MB per file
+                          </span>
+                        </label>
+                      </div>
+
+                      {/* New Files List */}
+                      {selectedFiles.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            New Files to Upload ({selectedFiles.length})
+                          </p>
+                          {selectedFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Files
+                                  size={16}
+                                  className="text-emerald-600 dark:text-emerald-400 flex-shrink-0"
+                                />
+                                <span className="text-sm text-gray-900 dark:text-white truncate">
+                                  {file.name}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleRemoveFile(index)}
+                                className="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded transition-colors flex-shrink-0"
+                              >
+                                <X
+                                  size={16}
+                                  className="text-red-600 dark:text-red-400"
+                                />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -744,6 +952,7 @@ export default function KnowledgeBase() {
                       setSelectedKB(null);
                       setFormData({ name: "", description: "" });
                       setSelectedFiles([]);
+                      setSelectedAgents([]);
                     }}
                     className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >

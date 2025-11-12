@@ -5,13 +5,15 @@ import {
   File,
   FloppyDisk,
   UserCircle,
+  Camera,
 } from "phosphor-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GlassButton } from "../components/GlassButton";
 import { GlassCard } from "../components/GlassCard";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useGetProfile, useUpdateProfile, useUploadProfileImage } from "../hooks";
 import { showToast } from "../utils/toast";
 
 export default function Profile() {
@@ -19,18 +21,75 @@ export default function Profile() {
   const { theme } = useTheme();
   const gradientBg = getGradient(theme, "primary");
 
+  // API hooks
+  const { data: profile, isLoading } = useGetProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const uploadImageMutation = useUploadProfileImage();
+
   const [formData, setFormData] = useState({
-    name: currentUser?.name || "",
-    email: currentUser?.email || "",
-    company: currentUser?.company || "",
-    bio: currentUser?.bio || "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    company: "",
+    bio: "",
   });
+
+  // Update form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        email: profile.email || "",
+        company: profile.company || "",
+        bio: profile.bio || "",
+      });
+    }
+  }, [profile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // setCurrentUser(formData);
-    showToast.success("Profile updated successfully! ✅");
+    
+    const updateData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      company: formData.company,
+      bio: formData.bio,
+    };
+
+    updateProfileMutation.mutate(updateData, {
+      onSuccess: () => {
+        showToast.success("Profile updated successfully! ✅");
+      },
+      onError: () => {
+        showToast.error("Failed to update profile");
+      },
+    });
   };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImageMutation.mutate({ image: file }, {
+        onSuccess: () => {
+          showToast.success("Profile image uploaded successfully! 📸");
+        },
+        onError: () => {
+          showToast.error("Failed to upload image");
+        },
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+      </div>
+    );
+  }
+
+  const displayUser = profile || currentUser;
 
   return (
     <div className="space-y-6">
@@ -62,41 +121,58 @@ export default function Profile() {
         <GlassCard>
           {/* Profile Header */}
           <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-            <div
-              className="w-24 h-24  rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold text-4xl shadow-lg"
-              style={{
-                background: gradientBg,
-              }}
-            >
-              {currentUser?.name.charAt(0).toUpperCase()}
+            <div className="relative">
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold text-4xl shadow-lg"
+                style={{
+                  background: gradientBg,
+                }}
+              >
+                {displayUser?.firstName?.charAt(0).toUpperCase() || displayUser?.email?.charAt(0).toUpperCase()}
+              </div>
+              <label htmlFor="profile-image" className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <Camera size={16} className="text-gray-600 dark:text-gray-400" />
+                <input
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {currentUser?.name}
+                {displayUser?.firstName} {displayUser?.lastName}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                {currentUser?.email}
+                {displayUser?.email}
               </p>
+              {displayUser?.company && (
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                  {displayUser.company}
+                </p>
+              )}
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                 Member since{" "}
-                {new Date(currentUser?.createdAt || "").toLocaleDateString()}
+                {new Date(displayUser?.createdAt || "").toLocaleDateString()}
               </p>
             </div>
           </div>
 
           {/* Profile Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                   <UserCircle size={18} weight="duotone" />
-                  Full Name
+                  First Name
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.firstName}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, firstName: e.target.value })
                   }
                   className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all"
                   required
@@ -104,19 +180,37 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className=" text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <UserCircle size={18} weight="duotone" />
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                   <EnvelopeSimple size={18} weight="duotone" />
                   Email
                 </label>
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all"
-                  required
+                  disabled
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Email cannot be changed
+                </p>
               </div>
 
               <div>
@@ -153,9 +247,13 @@ export default function Profile() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <GlassButton type="submit" className="flex items-center gap-2">
+              <GlassButton 
+                type="submit" 
+                disabled={updateProfileMutation.isPending}
+                className="flex items-center gap-2"
+              >
                 <FloppyDisk size={20} weight="duotone" />
-                Save Changes
+                {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
               </GlassButton>
             </div>
           </form>

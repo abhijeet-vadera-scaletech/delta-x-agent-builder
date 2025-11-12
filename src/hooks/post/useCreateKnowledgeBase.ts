@@ -7,6 +7,7 @@ export interface CreateKnowledgeBaseRequest {
   name: string;
   description?: string;
   fileIds?: string[];
+  agentIds?: string[]; // Array of agent IDs to attach this knowledge base to
   metadata?: Record<string, unknown>;
   [key: string]: string | string[] | Record<string, unknown> | undefined;
 }
@@ -20,6 +21,7 @@ export const useCreateKnowledgeBase = () => {
         name: data.name,
         ...(data.description && { description: data.description }),
         ...(data.fileIds && data.fileIds.length > 0 && { fileIds: data.fileIds }),
+        ...(data.agentIds && data.agentIds.length > 0 && { agentIds: data.agentIds }),
         ...(data.metadata && { metadata: data.metadata }),
       };
       

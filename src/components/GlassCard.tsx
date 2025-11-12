@@ -63,6 +63,7 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
+  onClick?: () => void;
 }
 
 export function StatCard({
@@ -71,47 +72,57 @@ export function StatCard({
   icon,
   gradient = "from-blue-500 to-cyan-500",
   trend,
+  onClick,
 }: StatCardProps) {
-  return (
-    <GlassCard hover className="overflow-hidden">
-      {/* Gradient Background */}
-      <div
-        className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 blur-2xl rounded-full -mr-16 -mt-16`}
-      ></div>
+  const isClickable = !!onClick;
 
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-            {label}
-          </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold bg-gradient-to-br bg-clip-text text-transparent from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
-              {value}
+  return (
+    <motion.div
+      whileHover={isClickable ? { scale: 1.02, y: -5 } : {}}
+      transition={{ type: "spring", stiffness: 300 }}
+      onClick={onClick}
+      className={isClickable ? "cursor-pointer" : "cursor-default"}
+    >
+      <GlassCard hover={isClickable} className="overflow-hidden">
+        {/* Gradient Background */}
+        <div
+          className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 blur-2xl rounded-full -mr-16 -mt-16`}
+        ></div>
+
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              {label}
             </p>
-            {trend && (
-              <span
-                className={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full",
-                  trend.isPositive
-                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                    : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                )}
-              >
-                {trend.isPositive ? "+" : ""}
-                {trend.value}%
-              </span>
-            )}
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold bg-gradient-to-br bg-clip-text text-transparent from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
+                {value}
+              </p>
+              {trend && (
+                <span
+                  className={cn(
+                    "text-xs font-semibold px-2 py-0.5 rounded-full",
+                    trend.isPositive
+                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                      : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                  )}
+                >
+                  {trend.isPositive ? "+" : ""}
+                  {trend.value}%
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Icon Container */}
+          <div
+            className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}
+          >
+            <div className="text-white">{icon}</div>
           </div>
         </div>
-
-        {/* Icon Container */}
-        <div
-          className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg`}
-        >
-          <div className="text-white">{icon}</div>
-        </div>
-      </div>
-    </GlassCard>
+      </GlassCard>
+    </motion.div>
   );
 }
 

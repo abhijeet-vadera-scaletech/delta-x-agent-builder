@@ -3,97 +3,86 @@ import {
   ChartBar,
   Clock,
   Lightning,
+  Robot,
   Sparkle,
   Star,
   Target,
   TrendUp,
   Users,
 } from "phosphor-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ErrorState from "../components/ErrorState";
 import { GlassCard, StatCard } from "../components/GlassCard";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useGetAgents } from "../hooks";
-import type { Agent } from "../types";
+import {
+  useGetAgents,
+  useGetAgentStats,
+  useGetCompleteAnalytics,
+} from "../hooks";
+import type { Agent, IntentLevel } from "../types";
 
-interface Session {
-  id: string;
-  consultantId: string;
-  userId: string;
-  agentId: string;
-  intentLevel: "high" | "medium" | "low";
-  duration: number;
-  createdAt: string;
-}
 
 export default function Dashboard() {
   const { currentUser } = useAuth();
   const { theme } = useTheme();
   const gradientBg = getGradient(theme, "primary");
-  const { data: agents = [], isLoading, error, refetch } = useGetAgents();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [intentFilter, setIntentFilter] = useState<
-    "all" | "high" | "medium" | "low"
-  >("all");
+  const { data: agents = [] } = useGetAgents();
+  const { data: agentStats } = useGetAgentStats();
+  const [intentFilter, setIntentFilter] = useState<IntentLevel>("all");
+  
+  // Fetch complete analytics data
+  const {
+    data: analytics,
+    isLoading,
+    error,
+    refetch,
+  } = useGetCompleteAnalytics({ intentLevel: intentFilter });
+  
 
-  // Load sessions from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem("coachAi_sessions");
-    if (stored) {
-      const all = JSON.parse(stored);
-      const userSessions = all.filter(
-        (s: Session) => s.consultantId === currentUser?.id
-      );
-      setSessions(userSessions);
-    }
-  }, [currentUser?.id]);
-
-  // Calculate stats
+  // Extract data from analytics
+  const stats = analytics?.stats || {
+    totalSessions: 0,
+    uniqueUsers: 0,
+    avgIntentScore: 0,
+    highIntentUsers: 0,
+  };
+  
+  const recentSessions = analytics?.recentSessions || [];
+  const highIntentUsers = analytics?.highIntentUsers || [];
+  const aiInsights = analytics?.aiInsights || [];
+  
+  // User agents for display
   const userAgents = agents.filter((a: Agent) => a.userId === currentUser?.id);
-  const totalSessions = sessions.length;
-  const uniqueUsers = new Set(sessions.map((s) => s.userId)).size;
-  const highIntentUsers = sessions.filter(
-    (s) => s.intentLevel === "high"
-  ).length;
-  const avgIntentScore =
-    sessions.length > 0
-      ? Math.round((highIntentUsers / sessions.length) * 100)
-      : 0;
 
-  // Filter sessions
-  const filteredSessions =
-    intentFilter === "all"
-      ? sessions
-      : sessions.filter((s) => s.intentLevel === intentFilter);
-
-  // Recent sessions
-  const recentSessions = filteredSessions
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    .slice(0, 10);
-
-  // High intent users
-  const highIntentSessions = sessions
-    .filter((s) => s.intentLevel === "high")
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    .slice(0, 5);
-
-  const getIntentColor = (level: string) => {
-    switch (level) {
-      case "high":
-        return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300";
-      case "medium":
+  const getIntentColor = (score: number) => {
+    if (score >= 70) {
+      return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300";
+    } else if (score >= 40) {
+      return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
+    } else {
+      return "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300";
+    }
+  };
+  
+  const getIntentLabel = (score: number) => {
+    if (score >= 70) return "High";
+    if (score >= 40) return "Medium";
+    return "Low";
+  };
+  
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "engagement":
         return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
-      case "low":
-        return "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300";
+      case "conversion":
+        return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300";
+      case "performance":
+        return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300";
+      case "recommendation":
+        return "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300";
       default:
         return "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300";
     }
@@ -227,7 +216,7 @@ export default function Dashboard() {
         </GlassCard>
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* Analytics Stats Grid */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -236,29 +225,64 @@ export default function Dashboard() {
       >
         <StatCard
           label="Total Sessions"
-          value={totalSessions}
+          value={stats.totalSessions}
           icon={<ChartBar size={28} weight="duotone" />}
           gradient="from-blue-500 to-cyan-500"
         />
         <StatCard
           label="Unique Users"
-          value={uniqueUsers}
+          value={stats.uniqueUsers}
           icon={<Users size={28} weight="duotone" />}
           gradient="from-purple-500 to-pink-500"
         />
         <StatCard
           label="Avg Intent Score"
-          value={`${avgIntentScore}%`}
+          value={`${stats.avgIntentScore}%`}
           icon={<TrendUp size={28} weight="duotone" />}
           gradient="from-emerald-500 to-teal-500"
         />
         <StatCard
           label="High Intent Users"
-          value={highIntentUsers}
+          value={stats.highIntentUsers}
           icon={<Star size={28} weight="duotone" />}
           gradient="from-orange-500 to-red-500"
         />
       </motion.div>
+
+      {/* Agent Stats Grid */}
+      {agentStats && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          <StatCard
+            label="Total Agents"
+            value={agentStats.totalAgents}
+            icon={<Robot size={28} weight="duotone" />}
+            gradient="from-indigo-500 to-blue-500"
+          />
+          <StatCard
+            label="Active Agents"
+            value={agentStats.activeAgents}
+            icon={<Lightning size={28} weight="duotone" />}
+            gradient="from-emerald-500 to-green-500"
+          />
+          <StatCard
+            label="Inactive Agents"
+            value={agentStats.inactiveAgents}
+            icon={<Clock size={28} weight="duotone" />}
+            gradient="from-gray-400 to-gray-500"
+          />
+          <StatCard
+            label="With File Search"
+            value={agentStats.withFileSearch}
+            icon={<Target size={28} weight="duotone" />}
+            gradient="from-cyan-500 to-teal-500"
+          />
+        </motion.div>
+      )}
 
       {/* Intent Filter */}
       <motion.div
@@ -306,15 +330,82 @@ export default function Dashboard() {
                 {level === "all"
                   ? "All Users"
                   : `${level.charAt(0).toUpperCase() + level.slice(1)} Intent`}
-                {level !== "all" &&
-                  ` (${
-                    sessions.filter((s) => s.intentLevel === level).length
-                  })`}
               </motion.button>
             ))}
           </div>
         </GlassCard>
       </motion.div>
+
+      {/* AI Insights Section */}
+      {aiInsights.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <GlassCard>
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundImage: getGradient(theme, "accent1") }}
+              >
+                <Sparkle
+                  size={20}
+                  weight="duotone"
+                  className="text-white"
+                />
+              </div>
+              <h2
+                className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r"
+                style={{ backgroundImage: getGradient(theme, "accent1") }}
+              >
+                AI Insights
+              </h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              AI-powered recommendations based on your analytics data
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {aiInsights.map((insight, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`px-2 py-1 text-xs font-bold rounded-full ${getCategoryColor(
+                        insight.category
+                      )}`}
+                    >
+                      {insight.category.charAt(0).toUpperCase() + insight.category.slice(1)}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900 dark:text-white font-medium">
+                        {insight.insight}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                          <div
+                            className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                            style={{ width: `${insight.confidence}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {insight.confidence}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* High Intent Users */}
@@ -343,14 +434,14 @@ export default function Dashboard() {
             </p>
 
             <div className="space-y-3">
-              {highIntentSessions.length === 0 ? (
+              {highIntentUsers.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
                   No high intent users yet
                 </p>
               ) : (
-                highIntentSessions.map((session) => (
+                highIntentUsers.map((user) => (
                   <motion.div
-                    key={session.id}
+                    key={user.userId}
                     whileHover={{ scale: 1.02, x: 5 }}
                     className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl"
                   >
@@ -370,20 +461,19 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-900 dark:text-white">
-                            User_{session.userId.slice(0, 8)}
+                            {user.userName}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              Sessions:{" "}
-                              {
-                                sessions.filter(
-                                  (s) => s.userId === session.userId
-                                ).length
-                              }
+                              Sessions: {user.sessionCount}
                             </p>
                             <span className="text-gray-400">•</span>
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {new Date(session.createdAt).toLocaleDateString()}
+                              Score: {user.avgIntentScore}%
+                            </p>
+                            <span className="text-gray-400">•</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {new Date(user.lastInteraction).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -394,7 +484,7 @@ export default function Dashboard() {
                           backgroundImage: getGradient(theme, "accent1"),
                         }}
                       >
-                        High Intent
+                        {user.avgIntentScore}% Intent
                       </div>
                     </div>
                   </motion.div>
@@ -466,11 +556,10 @@ export default function Dashboard() {
                         </div>
                         <span
                           className={`px-3 py-1 text-xs font-bold rounded-full ${getIntentColor(
-                            session.intentLevel
+                            session.intentScore
                           )}`}
                         >
-                          {session.intentLevel.charAt(0).toUpperCase() +
-                            session.intentLevel.slice(1)}
+                          {getIntentLabel(session.intentScore)} ({session.intentScore}%)
                         </span>
                       </div>
                     </motion.div>

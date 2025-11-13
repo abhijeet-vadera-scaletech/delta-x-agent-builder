@@ -25,6 +25,8 @@ export const API_CONFIG = {
     agent: (id: string) => `/api/agents/${id}`,
     agentDetails: (id: string) => `/api/agents/${id}/details`,
     agentStats: "/api/agents/stats",
+    agentActivate: (id: string) => `/api/agents/${id}/activate`,
+    agentDeactivate: (id: string) => `/api/agents/${id}/deactivate`,
     agentPermanentDelete: (id: string) => `/api/agents/${id}/permanent`,
 
     // Knowledge Base
@@ -45,6 +47,13 @@ export const API_CONFIG = {
     // Personalization
     personalizations: "/api/personalizations",
     personalization: (id: string) => `/api/personalizations/${id}`,
+
+    // Analytics
+    analyticsDashboard: "/api/analytics/dashboard",
+    analyticsSessions: "/api/analytics/sessions",
+    analyticsHighIntentUsers: "/api/analytics/high-intent-users",
+    analyticsAIInsights: "/api/analytics/ai-insights",
+    analyticsComplete: "/api/analytics/complete",
   },
 };
 

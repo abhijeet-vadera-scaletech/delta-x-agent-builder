@@ -9,13 +9,16 @@ import {
   CopySimple,
   PencilSimple,
   ArrowsClockwise,
+  Play,
+  Pause,
 } from "phosphor-react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { showToast } from "../utils/toast";
 import { Toaster } from "react-hot-toast";
-import { useGetAgents, useDeleteAgent } from "../hooks";
+import { useGetAgents, useGetAgentStats, useDeleteAgent, useActivateAgent, useDeactivateAgent } from "../hooks";
+import { useConfirmation } from "../hooks/useConfirmation";
 import type { Agent } from "../types";
 import { useTheme } from "../context/ThemeContext";
 import { getGradient } from "../config/theme";
@@ -23,24 +26,25 @@ import { StatCard, SectionCard, GlassCard } from "../components/GlassCard";
 import { GlassButton } from "../components/GlassButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorState from "../components/ErrorState";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function Agents() {
   const { currentUser } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingAgentId, setPendingAgentId] = useState<string | null>(null);
 
   // Fetch agents from API
   const { data: agents = [], isLoading, error, refetch } = useGetAgents();
+  const { data: agentStats } = useGetAgentStats();
   const deleteAgentMutation = useDeleteAgent();
+  const activateAgentMutation = useActivateAgent();
+  const deactivateAgentMutation = useDeactivateAgent();
+  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
 
   // Filter agents for current user
   const userAgents = agents.filter((a: Agent) => a.userId === currentUser?.id);
-
-  // Calculate stats
-  const totalAgents = userAgents.length;
-  const liveAgents = userAgents.filter((a: Agent) => !a.isDeleted).length;
-  const draftAgents = userAgents.filter((a: Agent) => a.isDeleted).length;
 
   const handleCopyPublicUrl = (agentId: string) => {
     const url = `${window.location.origin}/agent/${agentId}`;
@@ -51,31 +55,51 @@ export default function Agents() {
   };
 
   const handleDeleteAgent = (agentId: string, agentName: string) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${agentName}"? This action cannot be undone.`
-      )
-    ) {
-      deleteAgentMutation.mutate(agentId);
-    }
+    showConfirmation(
+      {
+        title: "Delete Agent",
+        message: `Are you sure you want to delete "${agentName}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        variant: "danger",
+      },
+      async () => {
+        await deleteAgentMutation.mutateAsync(agentId);
+      }
+    );
   };
 
+  const handleActivateAgent = (agentId: string) => {
+    setPendingAgentId(agentId);
+    activateAgentMutation.mutate(agentId, {
+      onSettled: () => setPendingAgentId(null)
+    });
+  };
+
+  const handleDeactivateAgent = (agentId: string) => {
+    setPendingAgentId(agentId);
+    deactivateAgentMutation.mutate(agentId, {
+      onSettled: () => setPendingAgentId(null)
+    });
+  };
+
+  // Use API stats if available, fallback to calculated stats
   const statCards = [
     {
       label: "Total Agents",
-      value: totalAgents,
+      value: agentStats?.totalAgents ?? userAgents.length,
       icon: Robot,
       gradient: "from-blue-500 to-cyan-500",
     },
     {
       label: "Active Agents",
-      value: liveAgents,
+      value: agentStats?.activeAgents ?? userAgents.filter((a: Agent) => a.isActive && !a.isDeleted).length,
       icon: Lightning,
       gradient: "from-emerald-500 to-teal-500",
     },
     {
-      label: "Inactive",
-      value: draftAgents,
+      label: "Inactive Agents",
+      value: agentStats?.inactiveAgents ?? userAgents.filter((a: Agent) => !a.isActive && !a.isDeleted).length,
       icon: ChartLine,
       gradient: "from-gray-400 to-gray-500",
     },
@@ -237,11 +261,13 @@ export default function Agents() {
                         <span
                           className={`px-2 py-0.5 rounded text-xs font-medium ${
                             agent.isDeleted
-                              ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                              : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                              ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                              : agent.isActive
+                              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                           }`}
                         >
-                          {agent.isDeleted ? "Inactive" : "Active"}
+                          {agent.isDeleted ? "Deleted" : agent.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
 
@@ -254,6 +280,37 @@ export default function Agents() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
+                          {!agent.isDeleted && (
+                            <>
+                              {agent.isActive ? (
+                                <button
+                                  onClick={() => handleDeactivateAgent(agent.id)}
+                                  title="Deactivate agent"
+                                  disabled={pendingAgentId === agent.id}
+                                  className="p-1.5 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  <Pause
+                                    size={16}
+                                    weight="duotone"
+                                    className="text-orange-600 dark:text-orange-400"
+                                  />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleActivateAgent(agent.id)}
+                                  title="Activate agent"
+                                  disabled={pendingAgentId === agent.id}
+                                  className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  <Play
+                                    size={16}
+                                    weight="duotone"
+                                    className="text-green-600 dark:text-green-400"
+                                  />
+                                </button>
+                              )}
+                            </>
+                          )}
                           <button
                             onClick={() =>
                               navigate(`/agent-space?edit=${agent.id}`)
@@ -319,6 +376,19 @@ export default function Agents() {
           </div>
         </GlassCard>
       </SectionCard>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={hideConfirmation}
+        onConfirm={confirmationState.onConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        isLoading={confirmationState.isLoading}
+      />
     </>
   );
 }

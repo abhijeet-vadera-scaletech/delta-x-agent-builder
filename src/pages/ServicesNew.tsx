@@ -16,6 +16,8 @@ import { useTheme } from "../context/ThemeContext";
 import { getGradient } from "../config/theme";
 import { GlassCard, StatCard } from "../components/GlassCard";
 import { GlassButton } from "../components/GlassButton";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { useConfirmation } from "../hooks/useConfirmation";
 
 interface Service {
   id: string;
@@ -33,6 +35,7 @@ export default function Services() {
   const { currentUser } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -101,12 +104,21 @@ export default function Services() {
   };
 
   const handleDeleteService = (id: string, name: string) => {
-    if (window.confirm(`Delete "${name}"? This action cannot be undone.`)) {
-      const updated = services.filter((s) => s.id !== id);
-      setServices(updated);
-      saveToStorage(updated);
-      showToast.success("Service deleted! 🗑️");
-    }
+    showConfirmation(
+      {
+        title: "Delete Service",
+        message: `Delete "${name}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        variant: "danger",
+      },
+      () => {
+        const updated = services.filter((s) => s.id !== id);
+        setServices(updated);
+        saveToStorage(updated);
+        showToast.success("Service deleted! 🗑️");
+      }
+    );
   };
 
   const handleToggleActionable = (id: string) => {
@@ -502,6 +514,19 @@ export default function Services() {
           </motion.div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={hideConfirmation}
+        onConfirm={confirmationState.onConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        isLoading={confirmationState.isLoading}
+      />
     </>
   );
 }

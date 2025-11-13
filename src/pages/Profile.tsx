@@ -8,8 +8,10 @@ import {
   Camera,
 } from "phosphor-react";
 import { useState, useEffect } from "react";
+import ErrorState from "../components/ErrorState";
 import { GlassButton } from "../components/GlassButton";
 import { GlassCard } from "../components/GlassCard";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -26,7 +28,7 @@ export default function Profile() {
   const gradientBg = getGradient(theme, "primary");
 
   // API hooks
-  const { data: profile, isLoading } = useGetProfile();
+  const { data: profile, isLoading, error, refetch } = useGetProfile();
   const updateProfileMutation = useUpdateProfile();
   const uploadImageMutation = useUploadProfileImage();
 
@@ -102,11 +104,23 @@ export default function Profile() {
     }
   };
 
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+      <div className="flex justify-center items-center min-h-[calc(100vh-148px)] overflow-hidden">
+        <LoadingSpinner message="Loading profile..." />
       </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <ErrorState
+        message="Failed to load profile data"
+        onRetry={refetch}
+        loading={isLoading}
+      />
     );
   }
 

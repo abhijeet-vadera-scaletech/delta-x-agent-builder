@@ -897,14 +897,10 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
 - Use clear, concise language
 - Support answers with \`examples\``}
                           rows={20}
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:outline-none font-mono text-sm leading-relaxed border-0"
-                          style={{ minHeight: "400px" }}
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:outline-none font-mono text-sm leading-relaxed border-0 max-h-[calc(100vh-660px)]"
                         />
                       ) : (
-                        <div
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-y-auto text-sm leading-relaxed"
-                          style={{ minHeight: "400px" }}
-                        >
+                        <div className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-y-auto text-sm leading-relaxed max-h-[calc(100vh-660px)]">
                           {formData.systemInstructions.trim() ? (
                             <div
                               className="max-w-none"
@@ -934,7 +930,7 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                 </div>
               </div>
             </div>
-            <div className="p-6 flex justify-between gap-3">
+            <div className="px-6 pb-4 flex justify-between gap-3">
               <GlassButton
                 onClick={() => setCurrentStep(1)}
                 className="flex items-center gap-2"

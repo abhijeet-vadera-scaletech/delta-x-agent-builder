@@ -15,6 +15,7 @@ import { GlassCard } from "../components/GlassCard";
 import { ChatPreview, ColorPicker } from "../components/ui";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorState from "../components/ErrorState";
+import ConfirmationModal from "../components/ConfirmationModal";
 import { getGradient } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -25,6 +26,7 @@ import {
   useUploadPersonalizationImage,
   useGetAgents,
 } from "../hooks";
+import { useConfirmation } from "../hooks/useConfirmation";
 import type {
   CreatePersonalizationRequest,
   Personalization,
@@ -48,6 +50,7 @@ export default function Personalization() {
   const updatePersonalization = useUpdatePersonalization();
   const deletePersonalization = useDeletePersonalization();
   const uploadPersonalizationImage = useUploadPersonalizationImage();
+  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
 
   // State for modal and form
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -206,16 +209,19 @@ export default function Personalization() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (
-      window.confirm("Are you sure you want to delete this personalization?")
-    ) {
-      try {
+  const handleDelete = (id: string) => {
+    showConfirmation(
+      {
+        title: "Delete Personalization",
+        message: "Are you sure you want to delete this personalization? This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        variant: "danger",
+      },
+      async () => {
         await deletePersonalization.mutateAsync(id);
-      } catch (error) {
-        console.error("Error deleting personalization:", error);
       }
-    }
+    );
   };
 
   const openPreview = (personalization: Personalization) => {
@@ -862,6 +868,19 @@ export default function Personalization() {
           </motion.div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={hideConfirmation}
+        onConfirm={confirmationState.onConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        isLoading={confirmationState.isLoading}
+      />
     </>
   );
 }

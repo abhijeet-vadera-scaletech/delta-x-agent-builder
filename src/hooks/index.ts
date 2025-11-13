@@ -18,6 +18,13 @@ export type { KnowledgeBase } from './get/useGetKnowledgeBases';
 export { useGetPersonalizations } from './get/useGetPersonalizations';
 export { useGetPersonalization } from './get/useGetPersonalization';
 
+// GET hooks - Analytics
+export { useGetDashboardStats } from './get/useGetDashboardStats';
+export { useGetAnalyticsSessions } from './get/useGetAnalyticsSessions';
+export { useGetHighIntentUsers } from './get/useGetHighIntentUsers';
+export { useGetAIInsights } from './get/useGetAIInsights';
+export { useGetCompleteAnalytics } from './get/useGetCompleteAnalytics';
+
 // POST hooks
 export { useCreateAgent } from './post/useCreateAgent';
 export { useLogin } from './post/useLogin';
@@ -32,6 +39,8 @@ export { useEnhancePrompt } from './post/useEnhancePrompt';
 
 // PATCH hooks
 export { useUpdateAgent } from './patch/useUpdateAgent';
+export { useActivateAgent } from './patch/useActivateAgent';
+export { useDeactivateAgent } from './patch/useDeactivateAgent';
 export { useUpdateKnowledgeBase } from './patch/useUpdateKnowledgeBase';
 export { useUpdatePersonalization } from './patch/useUpdatePersonalization';
 export { useUpdateProfile } from './patch/useUpdateProfile';

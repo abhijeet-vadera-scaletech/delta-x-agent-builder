@@ -8,6 +8,8 @@ import { useTheme } from "../context/ThemeContext";
 import { getGradient } from "../config/theme";
 import { GlassCard } from "../components/GlassCard";
 import { GlassButton } from "../components/GlassButton";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { useConfirmation } from "../hooks/useConfirmation";
 
 export default function Settings() {
   const { currentUser, logout } = useAuth();
@@ -23,6 +25,7 @@ export default function Settings() {
     newPassword: "",
     confirmPassword: "",
   });
+  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,29 +53,34 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      // Remove user from localStorage
-      const users = JSON.parse(localStorage.getItem("coachAi_users") || "[]");
-      const filteredUsers = users.filter(
-        (u: { id: string }) => u.id !== currentUser?.id
-      );
-      localStorage.setItem("coachAi_users", JSON.stringify(filteredUsers));
+    showConfirmation(
+      {
+        title: "Delete Account",
+        message: "Are you sure you want to delete your account? This action cannot be undone.",
+        confirmText: "Delete Account",
+        cancelText: "Cancel",
+        variant: "danger",
+      },
+      () => {
+        // Remove user from localStorage
+        const users = JSON.parse(localStorage.getItem("coachAi_users") || "[]");
+        const filteredUsers = users.filter(
+          (u: { id: string }) => u.id !== currentUser?.id
+        );
+        localStorage.setItem("coachAi_users", JSON.stringify(filteredUsers));
 
-      // Remove passwords
-      const passwords = JSON.parse(
-        localStorage.getItem("coachAi_passwords") || "{}"
-      );
-      delete passwords[currentUser?.email || ""];
-      localStorage.setItem("coachAi_passwords", JSON.stringify(passwords));
+        // Remove passwords
+        const passwords = JSON.parse(
+          localStorage.getItem("coachAi_passwords") || "{}"
+        );
+        delete passwords[currentUser?.email || ""];
+        localStorage.setItem("coachAi_passwords", JSON.stringify(passwords));
 
-      logout();
-      showToast.success("Account deleted successfully");
-      navigate("/auth");
-    }
+        logout();
+        showToast.success("Account deleted successfully");
+        navigate("/auth");
+      }
+    );
   };
 
   return (
@@ -369,6 +377,19 @@ export default function Settings() {
           </GlassCard>
         </motion.div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={hideConfirmation}
+        onConfirm={confirmationState.onConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        isLoading={confirmationState.isLoading}
+      />
     </div>
   );
 }

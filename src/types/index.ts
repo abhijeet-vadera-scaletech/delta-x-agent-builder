@@ -77,6 +77,7 @@ export interface Agent {
   tools?: Array<{ type: string }>;
   metadata?: Record<string, any>;
   isDeleted: boolean;
+  isActive: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -109,7 +110,9 @@ export interface UpdateAgentRequest {
 }
 
 export interface AgentStats {
-  total: number;
+  totalAgents: number;
+  activeAgents: number;
+  inactiveAgents: number;
   withFileSearch: number;
   deleted: number;
 }
@@ -277,4 +280,59 @@ export interface EnhancePromptRequest {
 
 export interface EnhancePromptResponse {
   enhancedInstruction: string;
+}
+
+// Analytics Types
+export interface DashboardStats {
+  totalSessions: number;
+  uniqueUsers: number;
+  avgIntentScore: number;
+  highIntentUsers: number;
+}
+
+export interface AnalyticsSession {
+  id: string;
+  threadId: string;
+  agentId: string;
+  agentName: string;
+  userId: string;
+  userName: string;
+  messageCount: number;
+  intentScore: number;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface HighIntentUser {
+  userId: string;
+  userName: string;
+  email: string;
+  sessionCount: number;
+  avgIntentScore: number;
+  lastInteraction: string;
+  totalMessages: number;
+}
+
+export interface AIInsight {
+  insight: string;
+  category: "engagement" | "conversion" | "performance" | "recommendation";
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface CompleteAnalytics {
+  stats: DashboardStats;
+  recentSessions: AnalyticsSession[];
+  highIntentUsers: HighIntentUser[];
+  aiInsights: AIInsight[];
+}
+
+export type IntentLevel = "all" | "high" | "medium" | "low";
+
+export interface AnalyticsQueryParams {
+  startDate?: string;
+  endDate?: string;
+  agentId?: string;
+  intentLevel?: IntentLevel;
+  limit?: number;
 }

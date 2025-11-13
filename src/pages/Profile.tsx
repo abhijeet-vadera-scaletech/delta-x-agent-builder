@@ -13,7 +13,11 @@ import { GlassCard } from "../components/GlassCard";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useGetProfile, useUpdateProfile, useUploadProfileImage } from "../hooks";
+import {
+  useGetProfile,
+  useUpdateProfile,
+  useUploadProfileImage,
+} from "../hooks";
 import { showToast } from "../utils/toast";
 
 export default function Profile() {
@@ -29,16 +33,21 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    profileImage: "",
     email: "",
     company: "",
     bio: "",
   });
+
+  // State for image upload loading
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   // Update form data when profile loads
   useEffect(() => {
     if (profile) {
       setFormData({
         firstName: profile.firstName || "",
+        profileImage: profile.profileImage || "",
         lastName: profile.lastName || "",
         email: profile.email || "",
         company: profile.company || "",
@@ -49,7 +58,7 @@ export default function Profile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const updateData = {
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -70,14 +79,26 @@ export default function Profile() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadImageMutation.mutate({ image: file }, {
-        onSuccess: () => {
-          showToast.success("Profile image uploaded successfully! 📸");
-        },
-        onError: () => {
-          showToast.error("Failed to upload image");
-        },
-      });
+      // Start loading immediately
+      setIsImageUploading(true);
+
+      uploadImageMutation.mutate(
+        { image: file },
+        {
+          onSuccess: (res: any) => {
+            showToast.success("Profile image uploaded successfully! 📸");
+            setFormData({
+              ...formData,
+              profileImage: res.data.imageUrl,
+            });
+            setIsImageUploading(false);
+          },
+          onError: () => {
+            showToast.error("Failed to upload image");
+            setIsImageUploading(false);
+          },
+        }
+      );
     }
   };
 
@@ -122,21 +143,46 @@ export default function Profile() {
           {/* Profile Header */}
           <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
             <div className="relative">
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold text-4xl shadow-lg"
-                style={{
-                  background: gradientBg,
-                }}
+              {/* Display profile image, loading state, or initials */}
+              {isImageUploading || updateProfileMutation.isPending ? (
+                <div className="w-24 h-24 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 shadow-lg">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-gray-800 dark:border-t-gray-100 dark:border-gray-800"></div>
+                </div>
+              ) : formData.profileImage ? (
+                <img
+                  src={formData.profileImage}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full object-cover shadow-lg"
+                />
+              ) : (
+                <div
+                  className="w-24 h-24 rounded-full flex items-center justify-center text-white dark:text-gray-900 font-bold text-4xl shadow-lg"
+                  style={{
+                    background: gradientBg,
+                  }}
+                >
+                  {displayUser?.firstName?.charAt(0).toUpperCase() ||
+                    displayUser?.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <label
+                htmlFor="profile-image"
+                className={`absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg transition-colors ${
+                  isImageUploading
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                }`}
               >
-                {displayUser?.firstName?.charAt(0).toUpperCase() || displayUser?.email?.charAt(0).toUpperCase()}
-              </div>
-              <label htmlFor="profile-image" className="absolute bottom-0 right-0 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <Camera size={16} className="text-gray-600 dark:text-gray-400" />
+                <Camera
+                  size={16}
+                  className="text-gray-600 dark:text-gray-400"
+                />
                 <input
                   id="profile-image"
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
+                  disabled={isImageUploading}
                   className="hidden"
                 />
               </label>
@@ -247,8 +293,8 @@ export default function Profile() {
             </div>
 
             <div className="flex justify-end pt-4">
-              <GlassButton 
-                type="submit" 
+              <GlassButton
+                type="submit"
                 disabled={updateProfileMutation.isPending}
                 className="flex items-center gap-2"
               >

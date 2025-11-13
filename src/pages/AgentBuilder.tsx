@@ -94,50 +94,97 @@ export default function AgentBuilder() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedPersonalizationId, setSelectedPersonalizationId] =
     useState<string>("");
-  const [markdownTab, setMarkdownTab] = useState<"editor" | "preview">("editor");
+  const [markdownTab, setMarkdownTab] = useState<"editor" | "preview">(
+    "editor"
+  );
   console.log("🚀 ~ AgentBuilderNew ~ selectedServices:", selectedServices);
 
   // Enhanced markdown renderer for preview
   const renderMarkdown = (markdown: string) => {
     let html = markdown;
-    
+
     // Handle horizontal rules
-    html = html.replace(/^---$/gim, '<hr class="border-t border-gray-300 dark:border-gray-600 my-4" />');
-    
+    html = html.replace(
+      /^---$/gim,
+      '<hr class="border-t border-gray-300 dark:border-gray-600 my-4" />'
+    );
+
     // Handle headers with proper spacing (compact like GitLab)
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1 mt-3">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold text-gray-900 dark:text-white mb-2 mt-3">$1</h1>');
-    
+    html = html.replace(
+      /^### (.*$)/gim,
+      '<h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1 mt-3">$1</h3>'
+    );
+    html = html.replace(
+      /^## (.*$)/gim,
+      '<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 mt-4">$1</h2>'
+    );
+    html = html.replace(
+      /^# (.*$)/gim,
+      '<h1 class="text-xl font-bold text-gray-900 dark:text-white mb-2 mt-3">$1</h1>'
+    );
+
     // Handle text formatting
-    html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold text-gray-900 dark:text-white">$1</strong>');
-    html = html.replace(/\*(.*?)\*/gim, '<em class="italic text-gray-800 dark:text-gray-200">$1</em>');
-    html = html.replace(/`([^`]+)`/gim, '<code class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
-    
+    html = html.replace(
+      /\*\*(.*?)\*\*/gim,
+      '<strong class="font-semibold text-gray-900 dark:text-white">$1</strong>'
+    );
+    html = html.replace(
+      /\*(.*?)\*/gim,
+      '<em class="italic text-gray-800 dark:text-gray-200">$1</em>'
+    );
+    html = html.replace(
+      /`([^`]+)`/gim,
+      '<code class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>'
+    );
+
     // Handle strikethrough
-    html = html.replace(/~~(.*?)~~/gim, '<del class="line-through text-gray-600 dark:text-gray-400">$1</del>');
-    
+    html = html.replace(
+      /~~(.*?)~~/gim,
+      '<del class="line-through text-gray-600 dark:text-gray-400">$1</del>'
+    );
+
     // Handle links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
-    
+    html = html.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/gim,
+      '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+
     // Handle code blocks
-    html = html.replace(/```([^`]+)```/gim, '<pre class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded text-sm font-mono overflow-x-auto my-2"><code>$1</code></pre>');
-    
+    html = html.replace(
+      /```([^`]+)```/gim,
+      '<pre class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-3 rounded text-sm font-mono overflow-x-auto my-2"><code>$1</code></pre>'
+    );
+
     // Handle blockquotes
-    html = html.replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-1 text-gray-700 dark:text-gray-300 italic my-2">$1</blockquote>');
-    
+    html = html.replace(
+      /^> (.*$)/gim,
+      '<blockquote class="border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-1 text-gray-700 dark:text-gray-300 italic my-2">$1</blockquote>'
+    );
+
     // Handle unordered lists with compact spacing
-    html = html.replace(/^- (.*$)/gim, '<li class="text-gray-700 dark:text-gray-300">$1</li>');
-    html = html.replace(/(<li.*?<\/li>)/gs, '<ul class="list-disc list-inside space-y-0 mb-2 ml-4">$1</ul>');
-    
+    html = html.replace(
+      /^- (.*$)/gim,
+      '<li class="text-gray-700 dark:text-gray-300">$1</li>'
+    );
+    html = html.replace(
+      /(<li.*?<\/li>)/gs,
+      '<ul class="list-disc list-inside space-y-0 mb-2 ml-4">$1</ul>'
+    );
+
     // Handle ordered lists
-    html = html.replace(/^\d+\. (.*$)/gim, '<li class="text-gray-700 dark:text-gray-300">$1</li>');
-    html = html.replace(/(<li.*?<\/li>)/gs, '<ol class="list-decimal list-inside space-y-0 mb-2 ml-4">$1</ol>');
-    
+    html = html.replace(
+      /^\d+\. (.*$)/gim,
+      '<li class="text-gray-700 dark:text-gray-300">$1</li>'
+    );
+    html = html.replace(
+      /(<li.*?<\/li>)/gs,
+      '<ol class="list-decimal list-inside space-y-0 mb-2 ml-4">$1</ol>'
+    );
+
     // Handle line breaks with minimal spacing
     html = html.replace(/\n\n/gim, '<div class="mb-2"></div>');
-    html = html.replace(/\n/gim, '<br />');
-    
+    html = html.replace(/\n/gim, "<br />");
+
     return html;
   };
 
@@ -422,7 +469,7 @@ export default function AgentBuilder() {
             systemInstructions: formData.systemInstructions,
             tone: formData.tone,
             personality: formData.personality,
-            personalizationId: selectedPersonalizationId,
+            personalizationId: selectedPersonalizationId || null,
           },
         },
         {
@@ -454,7 +501,7 @@ export default function AgentBuilder() {
             vectorStoreId: selectedKB.vectorStoreId,
           }),
         ...(selectedPersonalizationId && {
-          personalizationId: selectedPersonalizationId,
+          personalizationId: selectedPersonalizationId || null,
         }),
       };
 
@@ -786,7 +833,7 @@ export default function AgentBuilder() {
                           : "Enhance with AI"}
                       </GlassButton>
                     </div>
-                    
+
                     {/* Markdown Editor with Tabs */}
                     <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                       {/* Tab Header */}
@@ -817,11 +864,13 @@ export default function AgentBuilder() {
                             </button>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                            <span>Supports **bold**, *italic*, `code`, and more</span>
+                            <span>
+                              Supports **bold**, *italic*, `code`, and more
+                            </span>
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Tab Content */}
                       {markdownTab === "editor" ? (
                         <textarea
@@ -849,31 +898,37 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
 - Support answers with \`examples\``}
                           rows={20}
                           className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:outline-none font-mono text-sm leading-relaxed border-0"
-                          style={{ minHeight: '400px' }}
+                          style={{ minHeight: "400px" }}
                         />
                       ) : (
-                        <div 
+                        <div
                           className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-y-auto text-sm leading-relaxed"
-                          style={{ minHeight: '400px' }}
+                          style={{ minHeight: "400px" }}
                         >
                           {formData.systemInstructions.trim() ? (
-                            <div 
+                            <div
                               className="max-w-none"
-                              dangerouslySetInnerHTML={{ 
-                                __html: renderMarkdown(formData.systemInstructions) 
+                              dangerouslySetInnerHTML={{
+                                __html: renderMarkdown(
+                                  formData.systemInstructions
+                                ),
                               }}
                             />
                           ) : (
                             <div className="text-gray-500 dark:text-gray-400 italic">
-                              Switch to the Editor tab to write your system instructions. The preview will appear here as you type.
+                              Switch to the Editor tab to write your system
+                              instructions. The preview will appear here as you
+                              type.
                             </div>
                           )}
                         </div>
                       )}
                     </div>
-                    
+
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      Write comprehensive system instructions using markdown formatting. Use the "Enhance with AI" button to automatically improve and structure your content.
+                      Write comprehensive system instructions using markdown
+                      formatting. Use the "Enhance with AI" button to
+                      automatically improve and structure your content.
                     </p>
                   </div>
                 </div>

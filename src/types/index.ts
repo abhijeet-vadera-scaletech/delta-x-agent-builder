@@ -27,6 +27,7 @@ export interface User {
   role: "consultant" | "admin" | "user";
   createdAt: string;
   updatedAt: string;
+  profileImage?: string;
 }
 
 // Auth Types
@@ -93,7 +94,7 @@ export interface CreateAgentRequest {
   model?: string;
   hasFileSearch?: boolean;
   vectorStoreId?: string;
-  personalizationId?: string;
+  personalizationId?: string | null;
 }
 
 export interface UpdateAgentRequest {

@@ -3,12 +3,19 @@ import { ReactNode } from "react";
 import Sidebar from "./SidebarModern";
 import TopBar from "./TopBarModern";
 import { GlassCard } from "./GlassCard";
+import { AnimationType } from "./AnimatedIcon";
 
 interface LayoutProps {
   children: ReactNode;
+  headerIcon?: ReactNode;
+  animationType?: AnimationType;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({
+  children,
+  headerIcon,
+  animationType,
+}: LayoutProps) {
   return (
     <div>
       {/* Sidebar with Glass Effect */}
@@ -41,8 +48,8 @@ export default function Layout({ children }: LayoutProps) {
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          <GlassCard hover={false} noPadding>
-            <TopBar />
+          <GlassCard hover={false} noPadding className="overflow-hidden h-full">
+            <TopBar headerIcon={headerIcon} animationType={animationType} />
           </GlassCard>
         </motion.div>
 

@@ -21,7 +21,6 @@ import {
   useCreateKnowledgeBase,
   useDeleteKnowledgeBase,
   useGetKnowledgeBases,
-  useUpdateAgent,
   useUpdateKnowledgeBase,
   useUploadFile,
   type KnowledgeBase,
@@ -45,7 +44,6 @@ export default function KnowledgeBase() {
   const updateKBMutation = useUpdateKnowledgeBase();
   const deleteKBMutation = useDeleteKnowledgeBase();
   const uploadFileMutation = useUploadFile();
-  const updateAgentMutation = useUpdateAgent();
 
   // Fetch agents
   const { data: agents = [] } = useGetAgents();
@@ -94,24 +92,13 @@ export default function KnowledgeBase() {
       const uploadedFiles = await Promise.all(uploadPromises);
       const fileIds = uploadedFiles.map((file: UploadedFile) => file.id);
 
-      // Create knowledge base with file IDs
-      const newKB = await createKBMutation.mutateAsync({
+      // Create knowledge base with file IDs and agent assignments
+      await createKBMutation.mutateAsync({
         name: formData.name,
         description: formData.description,
         fileIds,
+        agentIds: selectedAgents,
       });
-
-      // Update selected agents with the new KB's vectorStoreId
-      if (selectedAgents.length > 0 && newKB.vectorStoreId) {
-        showToast.info("Assigning knowledge base to agents...");
-        const updatePromises = selectedAgents.map((agentId) =>
-          updateAgentMutation.mutateAsync({
-            id: agentId,
-            data: { vectorStoreId: newKB.vectorStoreId },
-          })
-        );
-        await Promise.all(updatePromises);
-      }
 
       showToast.success("Knowledge Base created successfully! 🎉");
       setFormData({ name: "", description: "" });
@@ -142,49 +129,15 @@ export default function KnowledgeBase() {
         fileIds = uploadedFiles.map((file: UploadedFile) => file.id);
       }
 
-      const updatedKB = await updateKBMutation.mutateAsync({
+      await updateKBMutation.mutateAsync({
         id: selectedKB.id,
         data: {
           name: formData.name,
           description: formData.description,
           ...(fileIds && fileIds.length > 0 ? { fileIds } : {}),
+          agentIds: selectedAgents,
         },
       });
-
-      // Update agent assignments
-      // First, remove KB from agents that are no longer selected
-      const currentAgentsUsingKB = agents
-        .filter((agent) => agent.vectorStoreId === selectedKB.vectorStoreId)
-        .map((agent) => agent.id);
-
-      const agentsToRemove = currentAgentsUsingKB.filter(
-        (agentId) => !selectedAgents.includes(agentId)
-      );
-      const agentsToAdd = selectedAgents.filter(
-        (agentId) => !currentAgentsUsingKB.includes(agentId)
-      );
-
-      if (agentsToRemove.length > 0 || agentsToAdd.length > 0) {
-        showToast.info("Updating agent assignments...");
-
-        // Remove KB from deselected agents
-        const removePromises = agentsToRemove.map((agentId) =>
-          updateAgentMutation.mutateAsync({
-            id: agentId,
-            data: { vectorStoreId: undefined },
-          })
-        );
-
-        // Add KB to newly selected agents
-        const addPromises = agentsToAdd.map((agentId) =>
-          updateAgentMutation.mutateAsync({
-            id: agentId,
-            data: { vectorStoreId: updatedKB.vectorStoreId },
-          })
-        );
-
-        await Promise.all([...removePromises, ...addPromises]);
-      }
 
       showToast.success("Knowledge Base updated successfully! ✨");
       setFormData({ name: "", description: "" });
@@ -546,14 +499,18 @@ export default function KnowledgeBase() {
                               description: agent.description,
                             }))}
                           value={agents
-                            .filter((agent) => selectedAgents.includes(agent.id))
+                            .filter((agent) =>
+                              selectedAgents.includes(agent.id)
+                            )
                             .map((agent) => ({
                               value: agent.id,
                               label: agent.name,
                               description: agent.description,
                             }))}
                           onChange={(selected) => {
-                            setSelectedAgents(selected ? selected.map((s) => s.value) : []);
+                            setSelectedAgents(
+                              selected ? selected.map((s) => s.value) : []
+                            );
                           }}
                           formatOptionLabel={(option) => (
                             <div>
@@ -573,9 +530,9 @@ export default function KnowledgeBase() {
                             borderRadius: 12,
                             colors: {
                               ...theme.colors,
-                              primary: '#3b82f6',
-                              primary25: '#dbeafe',
-                              primary50: '#bfdbfe',
+                              primary: "#3b82f6",
+                              primary25: "#dbeafe",
+                              primary50: "#bfdbfe",
                             },
                           })}
                         />
@@ -774,14 +731,18 @@ export default function KnowledgeBase() {
                               description: agent.description,
                             }))}
                           value={agents
-                            .filter((agent) => selectedAgents.includes(agent.id))
+                            .filter((agent) =>
+                              selectedAgents.includes(agent.id)
+                            )
                             .map((agent) => ({
                               value: agent.id,
                               label: agent.name,
                               description: agent.description,
                             }))}
                           onChange={(selected) => {
-                            setSelectedAgents(selected ? selected.map((s) => s.value) : []);
+                            setSelectedAgents(
+                              selected ? selected.map((s) => s.value) : []
+                            );
                           }}
                           formatOptionLabel={(option) => (
                             <div>
@@ -801,9 +762,9 @@ export default function KnowledgeBase() {
                             borderRadius: 12,
                             colors: {
                               ...theme.colors,
-                              primary: '#3b82f6',
-                              primary25: '#dbeafe',
-                              primary50: '#bfdbfe',
+                              primary: "#3b82f6",
+                              primary25: "#dbeafe",
+                              primary50: "#bfdbfe",
                             },
                           })}
                         />

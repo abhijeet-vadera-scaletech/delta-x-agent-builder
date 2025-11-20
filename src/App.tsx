@@ -1,25 +1,37 @@
 import {
+  Book,
+  ChartBar,
+  Gear,
+  Lightning,
+  Palette,
+  Robot,
+  Rocket,
+  Sliders,
+  User as UserIcon,
+} from "phosphor-react";
+import {
+  Navigate,
   Route,
   BrowserRouter as Router,
   Routes,
-  Navigate,
 } from "react-router-dom";
 import Layout from "./components/Layout";
+import { NetworkGoldWidget } from "./components/NetworkGoldWidget";
 import RouteInspector from "./components/RouteInspector";
 import { AppProvider } from "./context/AppContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import Auth from "./pages/Auth";
 import AgentBuilder from "./pages/AgentBuilder";
 import Agents from "./pages/Agents";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Personalization from "./pages/Personalization";
+import Profile from "./pages/Profile";
 import PublicAgentView from "./pages/PublicAgentViewNew";
 import Services from "./pages/ServicesNew";
-import TestDeploy from "./pages/TestDeploynew";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import TestDeploy from "./pages/TestDeploynew";
 
 function AppContent() {
   return (
@@ -37,7 +49,10 @@ function AppContent() {
           <Route
             path="/dashboard"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Lightning size={85} weight="duotone" />}
+                animationType="shake"
+              >
                 <Dashboard />
               </Layout>
             }
@@ -45,7 +60,10 @@ function AppContent() {
           <Route
             path="/agents"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Robot size={85} weight="duotone" />}
+                animationType="rotate"
+              >
                 <Agents />
               </Layout>
             }
@@ -53,7 +71,10 @@ function AppContent() {
           <Route
             path="/knowledge-base"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Book size={85} weight="duotone" />}
+                animationType="wobble"
+              >
                 <KnowledgeBase />
               </Layout>
             }
@@ -61,7 +82,10 @@ function AppContent() {
           <Route
             path="/agent-space"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Rocket size={85} weight="duotone" />}
+                animationType="fly"
+              >
                 <AgentBuilder />
               </Layout>
             }
@@ -69,7 +93,10 @@ function AppContent() {
           <Route
             path="/services"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Gear size={85} weight="duotone" />}
+                animationType="pulse"
+              >
                 <Services />
               </Layout>
             }
@@ -77,7 +104,10 @@ function AppContent() {
           <Route
             path="/personalization"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Palette size={85} weight="duotone" />}
+                animationType="flip"
+              >
                 <Personalization />
               </Layout>
             }
@@ -85,7 +115,10 @@ function AppContent() {
           <Route
             path="/test-deploy"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Rocket size={85} weight="duotone" />}
+                animationType="wobble"
+              >
                 <TestDeploy />
               </Layout>
             }
@@ -93,7 +126,10 @@ function AppContent() {
           <Route
             path="/analytics"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<ChartBar size={85} weight="duotone" />}
+                animationType="wobble"
+              >
                 <Dashboard />
               </Layout>
             }
@@ -101,7 +137,10 @@ function AppContent() {
           <Route
             path="/profile"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<UserIcon size={85} weight="duotone" />}
+                animationType="wobble"
+              >
                 <Profile />
               </Layout>
             }
@@ -109,11 +148,15 @@ function AppContent() {
           <Route
             path="/settings"
             element={
-              <Layout>
+              <Layout
+                headerIcon={<Sliders size={85} weight="duotone" />}
+                animationType="wobble"
+              >
                 <Settings />
               </Layout>
             }
           />
+          <Route path="/netzwerkgold-agent" element={<NetworkGoldWidget />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>

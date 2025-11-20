@@ -6,6 +6,8 @@ import type { KnowledgeBase } from "../get/useGetKnowledgeBases";
 interface UpdateKnowledgeBaseRequest {
   name?: string;
   description?: string;
+  fileIds?: string[];
+  agentIds?: string[];
   addFileIds?: string[];
   removeFileIds?: string[];
 }

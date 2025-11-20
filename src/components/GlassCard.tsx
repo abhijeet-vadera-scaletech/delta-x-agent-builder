@@ -49,7 +49,9 @@ export function GlassCard({
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent pointer-events-none"></div>
 
       {/* Content */}
-      <div className={`relative z-10 ${glassBodyClassName}`}>{children}</div>
+      <div className={`relative z-10 ${glassBodyClassName || ""}`}>
+        {children}
+      </div>
     </motion.div>
   );
 }

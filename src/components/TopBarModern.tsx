@@ -1,21 +1,27 @@
+import { motion } from "framer-motion";
 import {
   Bell,
-  MagnifyingGlass,
-  User as UserIcon,
-  SignOut,
   Gear,
-  Sun,
   Moon,
+  SignOut,
+  Sun,
+  User as UserIcon,
 } from "phosphor-react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getContrastTextColor, getGradientDiagonal } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { showToast } from "../utils/toast";
-import { getGradientDiagonal, getContrastTextColor } from "../config/theme";
+import AnimatedIcon from "./AnimatedIcon";
+import type { AnimationType } from "./AnimatedIcon";
 
-export default function TopBar() {
+interface TopBarProps {
+  headerIcon?: ReactNode;
+  animationType?: AnimationType;
+}
+
+export default function TopBar({ headerIcon, animationType }: TopBarProps) {
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -34,20 +40,13 @@ export default function TopBar() {
   }, []);
 
   return (
-    <div className="px-6 py-4 flex items-center justify-between">
+    <div className="px-6 py-4 flex items-center justify-between ">
       {/* Left Section */}
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <MagnifyingGlass
-            size={18}
-            weight="duotone"
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
-          />
-          <input
-            type="text"
-            placeholder="Search agents, documents..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
-          />
+      <div className="flex-1 max-w-md flex items-center justify-start ">
+        <div className="absolute left-16 -top-6 opacity-10">
+          {headerIcon && (
+            <AnimatedIcon icon={headerIcon} animationType={animationType} />
+          )}
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { httpService } from "../services/httpService";
 import LoadingSpinner from "./LoadingSpinner";
 
 // Define which routes are public (don't require authentication)
-const PUBLIC_ROUTES = ["/auth", "/agent/:agentId"];
+const PUBLIC_ROUTES = ["/auth", "/agent/:agentId", "/netzwerkgold-agent"];
 
 const RouteInspector: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();

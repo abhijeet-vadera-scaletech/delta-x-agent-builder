@@ -4,10 +4,11 @@ import Sidebar from "./SidebarModern";
 import TopBar from "./TopBarModern";
 import { GlassCard } from "./GlassCard";
 import { AnimationType } from "./AnimatedIcon";
+import { Icon } from "phosphor-react";
 
 interface LayoutProps {
   children: ReactNode;
-  headerIcon?: ReactNode;
+  headerIcon?: Icon;
   animationType?: AnimationType;
 }
 
@@ -17,7 +18,7 @@ export default function Layout({
   animationType,
 }: LayoutProps) {
   return (
-    <div>
+    <div className="overflow-hidden">
       {/* Sidebar with Glass Effect */}
       <motion.div
         className="fixed left-0 top-0 h-screen w-72 p-4 z-40"
@@ -48,14 +49,14 @@ export default function Layout({
             ease: [0.22, 1, 0.36, 1],
           }}
         >
-          <GlassCard hover={false} noPadding className="overflow-hidden h-full">
+          <GlassCard hover={false} noPadding className="h-full">
             <TopBar headerIcon={headerIcon} animationType={animationType} />
           </GlassCard>
         </motion.div>
 
         {/* Page Content with Card Container */}
         <motion.main
-          className="p-4 lg:p-6"
+          className="p-4 lg:p-6 relative z-20"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

@@ -66,31 +66,25 @@ export function GlassButton({
     <button
       disabled={disabled}
       className={cn(
-        "relative rounded-xl",
-        // Enhanced borders for better distinction
-        !isGradientButton &&
+        // Base styles
+        "relative rounded-xl px-4 py-2.5 shadow-xl shadow-gray-300/30 dark:shadow-black/40 transition-all duration-300",
+        // Glass effect styles (non-gradient buttons)
+        !isGradientButton && [
           "border-2 border-gray-200/80 dark:border-gray-700/80",
-        !isGradientButton && "ring-1 ring-white/40 dark:ring-white/10",
-        // Glass effect
-        !isGradientButton && "bg-white/90 dark:bg-gray-800/90",
-        !isGradientButton && "backdrop-blur-xl backdrop-saturate-150",
-        // Enhanced shadows for depth
-        "shadow-xl shadow-gray-300/30 dark:shadow-black/40",
-        // Hover effects
-        "transition-all duration-300",
-        !disabled &&
+          "ring-1 ring-white/40 dark:ring-white/10",
+          "bg-white/90 dark:bg-gray-800/90",
+          "backdrop-blur-xl backdrop-saturate-150",
+        ],
+        // Gradient button styles
+        isGradientButton && "text-white dark:text-gray-900 font-semibold",
+        // Hover effects (enabled state)
+        !disabled && [
           "hover:shadow-2xl hover:shadow-gray-600/40 dark:hover:shadow-black/80",
-        !disabled &&
           !isGradientButton &&
-          "hover:border-gray-300/80 dark:hover:border-gray-600/80",
-        // Active state
-        !disabled && "active:translate-y-0 active:shadow-lg",
+            "hover:border-gray-300/80 dark:hover:border-gray-600/80",
+        ],
         // Disabled state
         disabled && "opacity-50 cursor-not-allowed",
-        // Padding
-        "px-4 py-2.5",
-        // Text color for gradient buttons
-        isGradientButton && "text-white dark:text-gray-900 font-semibold",
         // Variant styles
         variantStyles[variant],
         className
@@ -98,16 +92,6 @@ export function GlassButton({
       style={gradientBg ? { backgroundImage: gradientBg } : undefined}
       {...props}
     >
-      {/* Inner glow effect - enhanced */}
-      {!isGradientButton && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/50 to-transparent dark:from-white/10 dark:to-transparent pointer-events-none"></div>
-      )}
-
-      {/* Subtle top highlight */}
-      {!isGradientButton && (
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent pointer-events-none"></div>
-      )}
-
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center gap-2">
         {children}

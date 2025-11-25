@@ -143,11 +143,19 @@ export function ChatPreview({
               <div
                 className={`${sizes.messageAvatar} rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0`}
               >
-                <Robot
-                  size={sizes.messageAvatarIcon}
-                  weight="duotone"
-                  className="text-gray-600"
-                />
+                {config.agentAvatar ? (
+                  <img
+                    src={config.agentAvatar}
+                    alt="Agent"
+                    className={`${sizes.messageAvatar} rounded-full object-cover`}
+                  />
+                ) : (
+                  <Robot
+                    size={sizes.messageAvatarIcon}
+                    weight="duotone"
+                    className="text-gray-600"
+                  />
+                )}
               </div>
             )}
             <div

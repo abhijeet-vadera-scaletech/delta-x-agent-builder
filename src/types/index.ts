@@ -85,6 +85,13 @@ export interface Agent {
   user?: User;
 }
 
+export interface MetaResponse {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface CreateAgentRequest {
   name: string;
   description?: string;

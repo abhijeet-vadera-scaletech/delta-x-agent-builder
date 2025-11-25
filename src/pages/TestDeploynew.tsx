@@ -40,7 +40,8 @@ export default function TestDeploy() {
   });
 
   // Fetch agents from API
-  const { data: agents = [], isLoading, error } = useGetAgents();
+  const { data: agentsResponse, isLoading, error } = useGetAgents();
+  const { items: agents = [] } = agentsResponse || {};
 
   // Filter agents for current user
   const userAgents = agents.filter((a: Agent) => a.userId === currentUser?.id);

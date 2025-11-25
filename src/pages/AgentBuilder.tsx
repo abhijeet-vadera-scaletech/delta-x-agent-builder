@@ -22,6 +22,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { GlassButton } from "../components/GlassButton";
+import Modal from "../components/Modal";
 import { ChatPreview } from "../components/ui";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
@@ -71,7 +72,8 @@ export default function AgentBuilder() {
   const editId = searchParams.get("edit");
   const isEditing = !!editId;
 
-  const { data: agents = [] } = useGetAgents();
+  const { data: agentsResponse } = useGetAgents();
+  const { items: agents = [] } = agentsResponse || {};
 
   const gradientBg = getGradient(theme);
 
@@ -81,9 +83,12 @@ export default function AgentBuilder() {
   const createKBMutation = useCreateKnowledgeBase();
   const uploadFileMutation = useUploadFile();
   const enhancePromptMutation = useEnhancePrompt();
-  const { data: knowledgeBasesData, isLoading: isLoadingKBs } =
+  const { data: knowledgeBasesResponse, isLoading: isLoadingKBs } =
     useGetKnowledgeBases();
-  const { data: personalizations = [] } = useGetPersonalizations();
+
+  const { items: knowledgeBasesData = [] } = knowledgeBasesResponse || {};
+  const { data: personalizationsResponse } = useGetPersonalizations();
+  const { items: personalizations = [] } = personalizationsResponse || {};
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -967,7 +972,6 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                 <GlassButton
                   onClick={() => setShowCreateKBModal(true)}
                   className="flex items-center gap-2"
-                  variant="gradient"
                 >
                   <Plus size={18} weight="bold" />
                   Create New KB
@@ -1221,7 +1225,7 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                   !formData.name ||
                   !formData.systemInstructions
                 }
-                className="flex items-center gap-2"
+                useGradient
               >
                 <Save size={20} />
                 {createAgentMutation.isPending || updateAgentMutation.isPending
@@ -1238,164 +1242,149 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
       </div>
 
       {/* Create KB Modal */}
-      {showCreateKBModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md"
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Create Knowledge Base
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowCreateKBModal(false);
-                    setKbFormData({ name: "", description: "" });
-                    setSelectedFiles([]);
-                  }}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X size={24} className="text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={kbFormData.name}
-                    onChange={(e) =>
-                      setKbFormData({ ...kbFormData, name: e.target.value })
-                    }
-                    placeholder="e.g., Customer Support KB"
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={kbFormData.description}
-                    onChange={(e) =>
-                      setKbFormData({
-                        ...kbFormData,
-                        description: e.target.value,
-                      })
-                    }
-                    placeholder="Describe what this knowledge base contains..."
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                  />
-                </div>
-
-                {/* File Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Files * (PDF, TXT, DOC, etc.)
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileSelect}
-                      accept=".pdf,.txt,.doc,.docx,.md"
-                      className="hidden"
-                      id="file-upload-agent"
-                    />
-                    <label
-                      htmlFor="file-upload-agent"
-                      className="flex flex-col items-center cursor-pointer"
-                    >
-                      <UploadSimple
-                        size={32}
-                        weight="duotone"
-                        className="text-gray-400 dark:text-gray-600 mb-2"
-                      />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Click to upload files
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        Max 512MB per file
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Selected Files List */}
-                  {selectedFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {selectedFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <Files
-                              size={16}
-                              className="text-blue-600 dark:text-blue-400 flex-shrink-0"
-                            />
-                            <span className="text-sm text-gray-900 dark:text-white truncate">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveFile(index)}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
-                          >
-                            <X
-                              size={16}
-                              className="text-red-600 dark:text-red-400"
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <GlassButton
-                    onClick={handleCreateKBFromAgent}
-                    disabled={
-                      createKBMutation.isPending || uploadFileMutation.isPending
-                    }
-                    className="flex-1 flex items-center justify-center gap-2"
-                  >
-                    <FloppyDisk size={20} weight="duotone" />
-                    {uploadFileMutation.isPending
-                      ? "Uploading..."
-                      : createKBMutation.isPending
-                      ? "Creating..."
-                      : "Create"}
-                  </GlassButton>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setShowCreateKBModal(false);
-                      setKbFormData({ name: "", description: "" });
-                      setSelectedFiles([]);
-                    }}
-                    className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </motion.button>
-                </div>
-              </div>
+      <Modal
+        isOpen={showCreateKBModal}
+        onClose={() => {
+          setShowCreateKBModal(false);
+          setKbFormData({ name: "", description: "" });
+          setSelectedFiles([]);
+        }}
+        title="Create Knowledge Base"
+        maxWidth="md"
+      >
+        <div className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Name *
+              </label>
+              <input
+                type="text"
+                value={kbFormData.name}
+                onChange={(e) =>
+                  setKbFormData({ ...kbFormData, name: e.target.value })
+                }
+                placeholder="e.g., Customer Support KB"
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
             </div>
-          </motion.div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Description
+              </label>
+              <textarea
+                value={kbFormData.description}
+                onChange={(e) =>
+                  setKbFormData({
+                    ...kbFormData,
+                    description: e.target.value,
+                  })
+                }
+                placeholder="Describe what this knowledge base contains..."
+                rows={3}
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+              />
+            </div>
+
+            {/* File Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Files * (PDF, TXT, DOC, etc.)
+              </label>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  accept=".pdf,.txt,.doc,.docx,.md"
+                  className="hidden"
+                  id="file-upload-agent"
+                />
+                <label
+                  htmlFor="file-upload-agent"
+                  className="flex flex-col items-center cursor-pointer"
+                >
+                  <UploadSimple
+                    size={32}
+                    weight="duotone"
+                    className="text-gray-400 dark:text-gray-600 mb-2"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Click to upload files
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Max 512MB per file
+                  </span>
+                </label>
+              </div>
+
+              {/* Selected Files List */}
+              {selectedFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Files
+                          size={16}
+                          className="text-blue-600 dark:text-blue-400 flex-shrink-0"
+                        />
+                        <span className="text-sm text-gray-900 dark:text-white truncate">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                          ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveFile(index)}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                      >
+                        <X
+                          size={16}
+                          className="text-red-600 dark:text-red-400"
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <GlassButton
+                onClick={handleCreateKBFromAgent}
+                disabled={
+                  createKBMutation.isPending || uploadFileMutation.isPending
+                }
+                className="flex-1 flex items-center justify-center gap-2"
+              >
+                <FloppyDisk size={20} weight="duotone" />
+                {uploadFileMutation.isPending
+                  ? "Uploading..."
+                  : createKBMutation.isPending
+                  ? "Creating..."
+                  : "Create"}
+              </GlassButton>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowCreateKBModal(false);
+                  setKbFormData({ name: "", description: "" });
+                  setSelectedFiles([]);
+                }}
+                className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

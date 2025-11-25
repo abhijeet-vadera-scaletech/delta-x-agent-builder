@@ -3,7 +3,6 @@ import {
   Briefcase,
   Plus,
   Trash,
-  X,
   CheckCircle,
   Circle,
   CurrencyDollar,
@@ -17,6 +16,7 @@ import { getGradient } from "../config/theme";
 import { GlassCard, StatCard } from "../components/GlassCard";
 import { GlassButton } from "../components/GlassButton";
 import ConfirmationModal from "../components/ConfirmationModal";
+import Modal from "../components/Modal";
 import { useConfirmation } from "../hooks/useConfirmation";
 
 interface Service {
@@ -35,7 +35,8 @@ export default function Services() {
   const { currentUser } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
+  const { confirmationState, showConfirmation, hideConfirmation } =
+    useConfirmation();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -370,150 +371,125 @@ export default function Services() {
         )}
       </div>
       {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-md w-full"
-          >
-            <GlassCard>
-              <div className="flex items-center justify-between mb-4">
-                <h2
-                  className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r"
-                  style={{ backgroundImage: gradientBg }}
-                >
-                  Create Service
-                </h2>
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowCreateModal(false)}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X
-                    size={20}
-                    weight="bold"
-                    className="text-gray-600 dark:text-gray-400"
-                  />
-                </motion.button>
-              </div>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Create Service"
+        maxWidth="md"
+      >
+        <div className="p-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Service Name *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="e.g., 1-on-1 Strategy Consultation"
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
+              />
+            </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Service Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="e.g., 1-on-1 Strategy Consultation"
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Describe what this service includes and how it helps clients..."
+                rows={3}
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all resize-none"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Describe what this service includes and how it helps clients..."
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all resize-none"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                Category
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                      Pricing
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.pricing}
-                      onChange={(e) =>
-                        setFormData({ ...formData, pricing: e.target.value })
-                      }
-                      placeholder="e.g., $500 per session"
-                      className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                      Duration
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.duration}
-                      onChange={(e) =>
-                        setFormData({ ...formData, duration: e.target.value })
-                      }
-                      placeholder="e.g., 60 minutes"
-                      className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
-                    />
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-md transition-shadow">
-                  <input
-                    type="checkbox"
-                    checked={formData.actionable}
-                    onChange={(e) =>
-                      setFormData({ ...formData, actionable: e.target.checked })
-                    }
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                    Users can directly request this service through the agent
-                  </span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Pricing
                 </label>
-
-                <div className="flex gap-3 pt-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </motion.button>
-                  <GlassButton onClick={handleCreateService} className="flex-1">
-                    Create Service
-                  </GlassButton>
-                </div>
+                <input
+                  type="text"
+                  value={formData.pricing}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pricing: e.target.value })
+                  }
+                  placeholder="e.g., $500 per session"
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
+                />
               </div>
-            </GlassCard>
-          </motion.div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Duration
+                </label>
+                <input
+                  type="text"
+                  value={formData.duration}
+                  onChange={(e) =>
+                    setFormData({ ...formData, duration: e.target.value })
+                  }
+                  placeholder="e.g., 60 minutes"
+                  className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl border border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-md transition-shadow">
+              <input
+                type="checkbox"
+                checked={formData.actionable}
+                onChange={(e) =>
+                  setFormData({ ...formData, actionable: e.target.checked })
+                }
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+              />
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                Users can directly request this service through the agent
+              </span>
+            </label>
+
+            <div className="flex gap-3 pt-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </motion.button>
+              <GlassButton onClick={handleCreateService} className="flex-1">
+                Create Service
+              </GlassButton>
+            </div>
+          </div>
         </div>
-      )}
+      </Modal>
 
       {/* Confirmation Modal */}
       <ConfirmationModal

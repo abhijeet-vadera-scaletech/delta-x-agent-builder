@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { Icon } from "phosphor-react";
 
 export type AnimationType =
   | "shake"
@@ -10,7 +10,7 @@ export type AnimationType =
   | "wobble";
 
 interface AnimatedIconProps {
-  icon: ReactNode;
+  Icon: Icon;
   size?: number;
   animationType?: AnimationType;
 }
@@ -98,7 +98,7 @@ const animationVariants = {
 };
 
 export default function AnimatedIcon({
-  icon,
+  Icon,
   size = 128,
   animationType = "shake",
 }: AnimatedIconProps) {
@@ -111,7 +111,7 @@ export default function AnimatedIcon({
       className="flex items-center justify-center"
       style={{ width: size, height: size }}
     >
-      {icon}
+      <Icon size={40} weight="duotone" />
     </motion.div>
   );
 }

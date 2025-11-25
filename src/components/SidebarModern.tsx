@@ -1,24 +1,23 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  BookOpen,
+  CaretRight,
+  ChartBar,
   House,
   Lightning,
-  BookOpen,
-  Wrench,
-  Palette,
-  ChartBar,
   List,
-  X,
-  SignOut,
-  CaretRight,
-  Rocket,
-  Briefcase,
+  Palette,
   Robot,
+  Rocket,
+  SignOut,
+  Wrench,
+  X,
 } from "phosphor-react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { getContrastTextColor, getGradientDiagonal } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { getGradientDiagonal, getContrastTextColor } from "../config/theme";
 
 // MenuItem Component
 function MenuItem({
@@ -127,11 +126,11 @@ export default function Sidebar() {
       icon: BookOpen,
       path: "/knowledge-base",
     },
-    {
-      label: "Services",
-      icon: Briefcase,
-      path: "/services",
-    },
+    // {
+    //   label: "Services",
+    //   icon: Briefcase,
+    //   path: "/services",
+    // },
     {
       label: "Personalization",
       icon: Palette,

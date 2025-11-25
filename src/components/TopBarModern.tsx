@@ -2,22 +2,23 @@ import { motion } from "framer-motion";
 import {
   Bell,
   Gear,
+  Icon,
   Moon,
   SignOut,
   Sun,
   User as UserIcon,
 } from "phosphor-react";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getContrastTextColor, getGradientDiagonal } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { showToast } from "../utils/toast";
-import AnimatedIcon from "./AnimatedIcon";
 import type { AnimationType } from "./AnimatedIcon";
+import AnimatedIcon from "./AnimatedIcon";
 
 interface TopBarProps {
-  headerIcon?: ReactNode;
+  headerIcon?: Icon;
   animationType?: AnimationType;
 }
 
@@ -43,9 +44,9 @@ export default function TopBar({ headerIcon, animationType }: TopBarProps) {
     <div className="px-6 py-4 flex items-center justify-between ">
       {/* Left Section */}
       <div className="flex-1 max-w-md flex items-center justify-start ">
-        <div className="absolute left-16 -top-6 opacity-10">
+        <div className="absolute left-0 -top-[24px] opacity-10">
           {headerIcon && (
-            <AnimatedIcon icon={headerIcon} animationType={animationType} />
+            <AnimatedIcon Icon={headerIcon} animationType={animationType} />
           )}
         </div>
       </div>

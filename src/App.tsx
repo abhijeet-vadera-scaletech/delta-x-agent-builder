@@ -1,7 +1,8 @@
 import {
-  Book,
+  BookOpen,
+  Briefcase,
   ChartBar,
-  Gear,
+  House,
   Lightning,
   Palette,
   Robot,
@@ -49,10 +50,7 @@ function AppContent() {
           <Route
             path="/dashboard"
             element={
-              <Layout
-                headerIcon={<Lightning size={85} weight="duotone" />}
-                animationType="shake"
-              >
+              <Layout headerIcon={House} animationType="shake">
                 <Dashboard />
               </Layout>
             }
@@ -60,10 +58,7 @@ function AppContent() {
           <Route
             path="/agents"
             element={
-              <Layout
-                headerIcon={<Robot size={85} weight="duotone" />}
-                animationType="rotate"
-              >
+              <Layout headerIcon={Lightning} animationType="shake">
                 <Agents />
               </Layout>
             }
@@ -71,10 +66,7 @@ function AppContent() {
           <Route
             path="/knowledge-base"
             element={
-              <Layout
-                headerIcon={<Book size={85} weight="duotone" />}
-                animationType="wobble"
-              >
+              <Layout headerIcon={BookOpen} animationType="shake">
                 <KnowledgeBase />
               </Layout>
             }
@@ -82,10 +74,7 @@ function AppContent() {
           <Route
             path="/agent-space"
             element={
-              <Layout
-                headerIcon={<Rocket size={85} weight="duotone" />}
-                animationType="fly"
-              >
+              <Layout headerIcon={Robot} animationType="shake">
                 <AgentBuilder />
               </Layout>
             }
@@ -93,10 +82,7 @@ function AppContent() {
           <Route
             path="/services"
             element={
-              <Layout
-                headerIcon={<Gear size={85} weight="duotone" />}
-                animationType="pulse"
-              >
+              <Layout headerIcon={Briefcase} animationType="shake">
                 <Services />
               </Layout>
             }
@@ -104,10 +90,7 @@ function AppContent() {
           <Route
             path="/personalization"
             element={
-              <Layout
-                headerIcon={<Palette size={85} weight="duotone" />}
-                animationType="flip"
-              >
+              <Layout headerIcon={Palette} animationType="shake">
                 <Personalization />
               </Layout>
             }
@@ -115,10 +98,7 @@ function AppContent() {
           <Route
             path="/test-deploy"
             element={
-              <Layout
-                headerIcon={<Rocket size={85} weight="duotone" />}
-                animationType="wobble"
-              >
+              <Layout headerIcon={Rocket} animationType="shake">
                 <TestDeploy />
               </Layout>
             }
@@ -126,10 +106,7 @@ function AppContent() {
           <Route
             path="/analytics"
             element={
-              <Layout
-                headerIcon={<ChartBar size={85} weight="duotone" />}
-                animationType="wobble"
-              >
+              <Layout headerIcon={ChartBar} animationType="shake">
                 <Dashboard />
               </Layout>
             }
@@ -137,10 +114,7 @@ function AppContent() {
           <Route
             path="/profile"
             element={
-              <Layout
-                headerIcon={<UserIcon size={85} weight="duotone" />}
-                animationType="wobble"
-              >
+              <Layout headerIcon={UserIcon} animationType="shake">
                 <Profile />
               </Layout>
             }
@@ -148,10 +122,7 @@ function AppContent() {
           <Route
             path="/settings"
             element={
-              <Layout
-                headerIcon={<Sliders size={85} weight="duotone" />}
-                animationType="wobble"
-              >
+              <Layout headerIcon={Sliders} animationType="shake">
                 <Settings />
               </Layout>
             }

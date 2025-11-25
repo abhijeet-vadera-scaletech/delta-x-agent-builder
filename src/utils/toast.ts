@@ -1,20 +1,19 @@
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 export const showToast = {
   success: (message: string) => {
     toast.success(message, {
       duration: 3000,
-      position: 'top-right',
+      position: "bottom-center",
       style: {
-        background: '#10b981',
-        color: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-        fontWeight: '600',
+        background: "#10b981",
+        color: "#fff",
+        padding: "8px 16px",
+        borderRadius: "10px",
       },
       iconTheme: {
-        primary: '#fff',
-        secondary: '#10b981',
+        primary: "#fff",
+        secondary: "#10b981",
       },
     });
   },
@@ -22,17 +21,16 @@ export const showToast = {
   error: (message: string) => {
     toast.error(message, {
       duration: 4000,
-      position: 'top-right',
+      position: "bottom-center",
       style: {
-        background: '#ef4444',
-        color: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-        fontWeight: '600',
+        background: "#ef4444",
+        color: "#fff",
+        padding: "8px 16px",
+        borderRadius: "10px",
       },
       iconTheme: {
-        primary: '#fff',
-        secondary: '#ef4444',
+        primary: "#fff",
+        secondary: "#ef4444",
       },
     });
   },
@@ -40,32 +38,30 @@ export const showToast = {
   info: (message: string) => {
     toast(message, {
       duration: 3000,
-      position: 'top-right',
-      icon: 'ℹ️',
+      position: "bottom-center",
+      icon: "ℹ️",
       style: {
-        background: '#3b82f6',
-        color: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-        fontWeight: '600',
+        background: "#3b82f6",
+        color: "#fff",
+        padding: "8px 16px",
+        borderRadius: "10px",
       },
     });
   },
 
   loading: (message: string) => {
     return toast.loading(message, {
-      position: 'top-right',
+      position: "bottom-center",
       style: {
-        background: '#6366f1',
-        color: '#fff',
-        padding: '16px',
-        borderRadius: '8px',
-        fontWeight: '600',
+        background: "#6366f1",
+        color: "#fff",
+        padding: "8px 16px",
+        borderRadius: "10px",
       },
     });
   },
 
-  promise: <T,>(
+  promise: <T>(
     promise: Promise<T>,
     messages: {
       loading: string;
@@ -81,11 +77,10 @@ export const showToast = {
         error: messages.error,
       },
       {
-        position: 'top-right',
+        position: "bottom-center",
         style: {
-          padding: '16px',
-          borderRadius: '8px',
-          fontWeight: '600',
+          padding: "8px 16px",
+          borderRadius: "10px",
         },
       }
     );

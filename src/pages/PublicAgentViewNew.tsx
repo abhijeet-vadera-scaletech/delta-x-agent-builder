@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { PaperPlaneRight, Robot, Sparkle, User } from "phosphor-react";
+import { PaperPlaneRight, Pause, Robot, Sparkle, User } from "phosphor-react";
 import { showToast } from "../utils/toast";
 import { useGetPublicAgent } from "../hooks";
 import { useChat } from "../hooks/useChat";
@@ -11,7 +11,11 @@ import { GlassCard } from "../components/GlassCard";
 import { useTheme } from "../context/ThemeContext";
 import { getGradient, getContrastTextColor } from "../config/theme";
 
-export default function PublicAgentView() {
+export default function PublicAgentView({
+  isTesting,
+}: {
+  isTesting?: boolean;
+}) {
   const { agentId } = useParams<{ agentId: string }>();
   const { theme } = useTheme();
   const [userMessage, setUserMessage] = useState("");
@@ -116,7 +120,11 @@ export default function PublicAgentView() {
     const isFirstMessage =
       messages.length === 0 ||
       (messages.length === 1 && messages[0].role === "assistant");
-    await sendChatMessage(messageText, isFirstMessage ? userName : undefined);
+    await sendChatMessage(
+      messageText,
+      isFirstMessage ? userName : undefined,
+      isTesting
+    );
   };
 
   // Loading state
@@ -147,6 +155,44 @@ export default function PublicAgentView() {
         message="This agent is currently not available for chat."
         fullScreen
       />
+    );
+  }
+
+  // Check if agent is inactive
+  if (agent.isActive === false) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full"
+        >
+          <GlassCard className="text-center p-12">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center mx-auto mb-6 shadow-lg"
+            >
+              <Pause size={40} weight="duotone" className="text-white" />
+            </motion.div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              Agent Temporarily Unavailable
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {agent.name}
+              </span>{" "}
+              is currently inactive and not accepting conversations.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
+              Please check back later or contact the agent owner for more
+              information.
+            </p>
+          </GlassCard>
+        </motion.div>
+      </div>
     );
   }
 

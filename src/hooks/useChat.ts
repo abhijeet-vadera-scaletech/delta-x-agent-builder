@@ -66,7 +66,10 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
         userId: state.userId,
         agentId,
       };
-      localStorage.setItem(`chat_session_${agentId}`, JSON.stringify(sessionData));
+      localStorage.setItem(
+        `chat_session_${agentId}`,
+        JSON.stringify(sessionData)
+      );
     }
   }, [state.threadId, state.userId, agentId]);
 
@@ -89,15 +92,15 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
 
     // Start typing effect
     let currentIndex = state.displayedMessage.length;
-    
+
     typingIntervalRef.current = window.setInterval(() => {
       const targetMessage = messageBufferRef.current;
-      
+
       if (currentIndex < targetMessage.length) {
         // Add 1-3 characters at a time for smoother effect
         const charsToAdd = Math.min(3, targetMessage.length - currentIndex);
         currentIndex += charsToAdd;
-        
+
         setState((prev) => ({
           ...prev,
           displayedMessage: targetMessage.slice(0, currentIndex),
@@ -121,7 +124,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
   }, [state.currentMessage]);
 
   const sendMessage = useCallback(
-    async (message: string, userName?: string) => {
+    async (message: string, userName?: string, isTestMode?: boolean) => {
       if (!message.trim() || state.streaming) return;
 
       // Add user message to UI immediately
@@ -153,9 +156,11 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
           threadId?: string;
           userId?: string;
           userName?: string;
+          environment?: "live" | "test";
         } = {
           agentId,
           message,
+          environment: isTestMode ? "test" : "live",
         };
 
         // Add threadId and userId if they exist (for continuing conversation)
@@ -208,14 +213,17 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
             if (line.startsWith("data: ")) {
               try {
                 const data: StreamEvent = JSON.parse(line.slice(6));
-                
+
                 // Debug log for delta events
                 if (data.type === "thread.message.delta") {
                   console.log("[Chat Delta]", {
                     type: data.type,
                     hasDataDelta: !!data.data?.delta,
                     hasDelta: !!data.delta,
-                    text: data.data?.delta?.content?.[0]?.text?.value || data.delta?.content?.[0]?.text?.value || "NO TEXT FOUND"
+                    text:
+                      data.data?.delta?.content?.[0]?.text?.value ||
+                      data.delta?.content?.[0]?.text?.value ||
+                      "NO TEXT FOUND",
                   });
                 }
 
@@ -233,7 +241,8 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
 
                   case "thread":
                     // Handle thread event - contains thread info
-                    newThreadId = data.thread?.threadId || data.thread?.id || null;
+                    newThreadId =
+                      data.thread?.threadId || data.thread?.id || null;
                     if (data.thread?.userId) {
                       newUserId = data.thread.userId;
                     }
@@ -264,7 +273,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
                     // Handle streaming text delta
                     // Try multiple possible paths for the text value
                     let text = "";
-                    
+
                     // Path 1: data.data.delta.content[0].text.value
                     if (data.data?.delta?.content?.[0]?.text?.value) {
                       text = data.data.delta.content[0].text.value;
@@ -274,10 +283,12 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
                       text = data.delta.content[0].text.value;
                     }
                     // Path 3: data.data.delta.content[0].text (if text is direct string)
-                    else if (typeof data.data?.delta?.content?.[0]?.text === 'string') {
+                    else if (
+                      typeof data.data?.delta?.content?.[0]?.text === "string"
+                    ) {
                       text = data.data.delta.content[0].text;
                     }
-                    
+
                     if (text) {
                       assistantMessage += text;
                       setState((prev) => ({
@@ -344,7 +355,14 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
         }
       }
     },
-    [agentId, state.threadId, state.userId, state.thread, state.streaming, onError]
+    [
+      agentId,
+      state.threadId,
+      state.userId,
+      state.thread,
+      state.streaming,
+      onError,
+    ]
   );
 
   const addGreetingMessage = useCallback((greetingText: string) => {
@@ -366,7 +384,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
   const clearChat = useCallback(() => {
     // Clear localStorage session
     localStorage.removeItem(`chat_session_${agentId}`);
-    
+
     setState({
       messages: [],
       currentMessage: "",

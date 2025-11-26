@@ -41,7 +41,10 @@ function AppContent() {
         {/* Public routes */}
         <Route element={<RouteInspector />}>
           <Route path="/auth" element={<Auth />} />
-          <Route path="/agent/:agentId" element={<PublicAgentView />} />
+          <Route
+            path="/agent/:agentId"
+            element={<PublicAgentView isTesting={true} />}
+          />
         </Route>
 
         {/* Protected routes */}

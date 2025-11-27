@@ -74,5 +74,6 @@ export const useGetChatMessages = (
       return response.data.data;
     },
     enabled: !!threadId && !!idToken,
+    staleTime: 0,
   });
 };

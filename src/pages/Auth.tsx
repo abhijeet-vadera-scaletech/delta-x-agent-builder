@@ -13,7 +13,7 @@ import {
   UserPlus,
   Eye,
   EyeSlash,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import {
   getGradient,
   getGradientDiagonal,

@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Palette } from "phosphor-react";
+import { Palette } from "@phosphor-icons/react";
 
 interface ColorPickerProps {
   value: string;
@@ -35,7 +35,7 @@ export function ColorPicker({
       <button
         type="button"
         onClick={handleButtonClick}
-        className="w-full h-12 rounded-lg border-2 border-gray-300 dark:border-gray-700 flex items-center gap-3 px-3 hover:border-blue-500 transition-colors"
+        className="w-full h-12 rounded-lg border-2 border-gray-300 dark:border-gray-700 flex items-center gap-3 px-3 hover:border-primary dark:hover:border-white transition-colors"
         style={{ backgroundColor: value }}
       >
         <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-md px-2 py-1 border border-gray-700">

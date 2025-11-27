@@ -1,44 +1,220 @@
-import { motion } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import {
+  ArchiveIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  ListIcon,
+  MoonIcon,
+  PaperPlaneRightIcon,
+  PlusIcon,
+  RobotIcon,
+  SignOutIcon,
+  SunIcon,
+  TrashIcon,
+  TrayArrowUpIcon,
+  UserIcon,
+  XIcon,
+} from "@phosphor-icons/react";
+import { formatDistanceToNow } from "date-fns";
+import { User as FirebaseUser } from "firebase/auth";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { Toaster } from "react-hot-toast";
 import { useParams } from "react-router-dom";
-import { PaperPlaneRight, Pause, Robot, Sparkle, User } from "phosphor-react";
-import { showToast } from "../utils/toast";
-import { useGetPublicAgent } from "../hooks";
-import { useChat } from "../hooks/useChat";
-import LoadingSpinner from "../components/LoadingSpinner";
+import AuthModal from "../components/AuthModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 import ErrorState from "../components/ErrorState";
-import { GlassCard } from "../components/GlassCard";
+import LoadingSpinner from "../components/LoadingSpinner";
+import TypingLoader from "../components/TypingLoader";
 import { useTheme } from "../context/ThemeContext";
-import { getGradient, getContrastTextColor } from "../config/theme";
+import { useGetAuthProviders } from "../hooks/get/useGetAuthProviders";
+import { useGetChatMessages } from "../hooks/get/useGetChatMessages";
+import {
+  ChatSession,
+  useGetChatSessions,
+} from "../hooks/get/useGetChatSessions";
+import { useGetPublicAgent } from "../hooks/get/useGetPublicAgent";
+import { useUpdateThreadStatus } from "../hooks/patch/useUpdateThreadStatus";
+import { useChat } from "../hooks/useChat";
+import { useConfirmation } from "../hooks/useConfirmation";
+import {
+  getIdToken,
+  getUserDisplayName,
+  onAuthChange,
+  signInAnonymous,
+  signInWithGithub,
+  signInWithGoogle,
+  signOut,
+} from "../services/authService";
+import { showToast } from "../utils/toast";
 
-export default function PublicAgentView({
+export default function PublicAgentViewNew({
   isTesting,
 }: {
   isTesting?: boolean;
 }) {
   const { agentId } = useParams<{ agentId: string }>();
-  const { theme } = useTheme();
   const [userMessage, setUserMessage] = useState("");
-  const [userName, setUserName] = useState("");
-  const [isStarted, setIsStarted] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showArchivedChats, setShowArchivedChats] = useState(false);
+  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { confirmationState, showConfirmation, hideConfirmation } =
+    useConfirmation();
+  const { theme, toggleTheme } = useTheme();
+  const [idToken, setIdToken] = useState<string | undefined>();
 
   // Fetch agent data from API
   const { data: agent, isLoading, error } = useGetPublicAgent(agentId || "");
 
-  // Chat hook with real API integration
+  // Fetch auth providers
+  const { data: authProviders = [] } = useGetAuthProviders();
+
+  // Get Firebase ID token when user changes
+  useEffect(() => {
+    if (user) {
+      getIdToken().then((idToken) => {
+        setIdToken(idToken || undefined);
+      });
+    }
+  }, [user]);
+
+  // Restore last selected thread from localStorage on mount
+  useEffect(() => {
+    if (user && agentId) {
+      const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+      const savedThreadId = localStorage.getItem(storageKey);
+      if (savedThreadId) {
+        setSelectedThreadId(savedThreadId);
+      }
+    }
+  }, [user, agentId]);
+
+  // Fetch chat sessions
+  const { data: activeSessions, refetch: refetchActiveSessions } =
+    useGetChatSessions(idToken, false);
+  const { data: archivedSessions, refetch: refetchArchivedSessions } =
+    useGetChatSessions(idToken, true);
+
+  // Fetch messages for selected thread
+  const { data: chatData } = useGetChatMessages(idToken, selectedThreadId);
+
+  // Update thread status mutation
+  const updateThreadStatusMutation = useUpdateThreadStatus(idToken);
+
+  // Get current session from selected thread
+  const currentSession = chatData?.thread || null;
+
+  // Listen to auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthChange((firebaseUser) => {
+      try {
+        setUser(firebaseUser);
+        setAuthLoading(false);
+
+        if (firebaseUser && agentId) {
+          // Refetch sessions when user logs in
+          refetchActiveSessions();
+          refetchArchivedSessions();
+        }
+      } catch (error) {
+        console.error("Auth state change error:", error);
+        setAuthLoading(false);
+        showToast.error(
+          "Failed to load user session. Please refresh the page."
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [agentId, refetchActiveSessions, refetchArchivedSessions]);
+
+  // Handle authentication based on agent settings
+  useEffect(() => {
+    if (!agent || authLoading || user) return;
+
+    const initAuth = async () => {
+      try {
+        if (!agent.isOAuthEnabled) {
+          await handleAnonymousSignIn();
+        } else {
+          setShowAuthModal(true);
+        }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+        showToast.error(
+          "Failed to initialize authentication. Please refresh the page."
+        );
+      }
+    };
+
+    initAuth();
+  }, [agent, authLoading, user]);
+
+  // Chat hook
   const {
-    messages,
+    messages: localMessages,
     currentMessage,
     streaming,
     sendMessage: sendChatMessage,
-    addGreetingMessage,
+    setMessages,
+    clearChat,
+    threadId,
   } = useChat({
     agentId: agentId || "",
+    threadId: selectedThreadId || undefined,
     onError: (err) => {
       showToast.error(err.message || "Failed to send message");
     },
   });
+
+  // Load messages from API when thread is selected, then use local messages for all updates
+  useEffect(() => {
+    if (selectedThreadId && chatData?.messages) {
+      // Transform API messages to match ChatMessage type
+      const transformedMessages = chatData.messages.map((msg) => ({
+        id: msg.id,
+        messageId: msg.id, // Use id as messageId
+        threadId: selectedThreadId, // Add threadId from selected thread
+        role: msg.role,
+        content: msg.content,
+        createdAt: msg.createdAt,
+        metadata: msg.metadata,
+      }));
+      // Initialize local messages with API data when thread is selected
+      setMessages(transformedMessages);
+    } else if (!selectedThreadId) {
+      // Clear messages when starting a new chat
+      setMessages([]);
+    }
+  }, [selectedThreadId, chatData?.messages, setMessages]);
+
+  // Update selected thread when threadId changes (after first message in new chat)
+  useEffect(() => {
+    if (threadId && !selectedThreadId) {
+      setSelectedThreadId(threadId);
+      // Save to localStorage
+      if (user && agentId) {
+        const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+        localStorage.setItem(storageKey, threadId);
+      }
+      // Refetch sessions to get the new thread
+      refetchActiveSessions();
+      refetchArchivedSessions();
+    }
+  }, [
+    threadId,
+    selectedThreadId,
+    user,
+    agentId,
+    refetchActiveSessions,
+    refetchArchivedSessions,
+  ]);
+
+  // Use local messages for display
+  const messages = localMessages;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,95 +224,202 @@ export default function PublicAgentView({
     scrollToBottom();
   }, [messages, currentMessage]);
 
-  const handleStartChat = () => {
-    if (!userName.trim()) {
-      showToast.error("Please enter your name");
-      return;
-    }
-    setIsStarted(true);
+  // Greeting is shown in the empty state UI, not as a message
+  // No need to add greeting to messages array
 
-    // Track session start
-    const sessionId = Date.now().toString();
-    const session = {
-      id: sessionId,
-      consultantId: agent?.userId || "",
-      userId: userName,
-      agentId: agentId || "",
-      intentLevel: "medium" as const,
-      duration: 0,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Save session to localStorage
-    const sessions = JSON.parse(
-      localStorage.getItem("coachAi_sessions") || "[]"
-    );
-    sessions.push(session);
-    localStorage.setItem("coachAi_sessions", JSON.stringify(sessions));
-
-    // Store session ID and user name
-    sessionStorage.setItem("currentSessionId", sessionId);
-    sessionStorage.setItem("userName", userName);
-
-    // Add greeting message as incoming assistant message (not sent to API)
-    if (agent?.greetingMessage) {
-      addGreetingMessage(agent.greetingMessage);
+  const handleAnonymousSignIn = async () => {
+    try {
+      setAuthLoading(true);
+      await signInAnonymous();
+      showToast.success("Signed in as guest");
+    } catch (error) {
+      console.error("Anonymous sign in error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to sign in as guest";
+      showToast.error(errorMessage);
+      setAuthLoading(false);
     }
   };
 
+  const handleOAuthSignIn = async (provider: "google" | "github") => {
+    try {
+      let result;
+      if (provider === "google") {
+        result = await signInWithGoogle();
+      } else {
+        result = await signInWithGithub();
+      }
+      // Set user immediately after successful login
+      setUser(result);
+      setShowAuthModal(false);
+      showToast.success(
+        `Signed in with ${provider === "google" ? "Google" : "GitHub"}`
+      );
+    } catch (error) {
+      console.error("OAuth sign in error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : `Failed to sign in with ${provider}`;
+      showToast.error(errorMessage);
+      // Keep modal open on error so user can try again
+    }
+  };
+
+  const handleSignOut = () => {
+    showConfirmation(
+      {
+        title: "Sign Out",
+        message:
+          "Are you sure you want to sign out? Your current session will be saved.",
+        confirmText: "Sign Out",
+        cancelText: "Cancel",
+        variant: "warning",
+      },
+      async () => {
+        try {
+          await signOut();
+          setSelectedThreadId(null);
+          // Clear from localStorage
+          if (user && agentId) {
+            const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+            localStorage.removeItem(storageKey);
+          }
+          showToast.success("Signed out successfully");
+        } catch (error) {
+          console.error("Sign out error:", error);
+          const errorMessage =
+            error instanceof Error ? error.message : "Failed to sign out";
+          showToast.error(errorMessage);
+        }
+      }
+    );
+  };
+
+  const handleNewChat = () => {
+    try {
+      if (!user || !agentId) return;
+      // Clear the current chat and selected thread to start a new chat
+      clearChat();
+      setSelectedThreadId(null);
+      // Clear from localStorage
+      const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+      localStorage.removeItem(storageKey);
+      // Greeting will be shown in the empty state UI automatically
+    } catch (error) {
+      console.error("Create new chat error:", error);
+      showToast.error("Failed to create new chat. Please try again.");
+    }
+  };
+
+  const handleSessionSelect = (sessionId: string) => {
+    try {
+      setSelectedThreadId(sessionId);
+      // Save to localStorage
+      if (user && agentId) {
+        const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+        localStorage.setItem(storageKey, sessionId);
+      }
+    } catch (error) {
+      console.error("Session select error:", error);
+      showToast.error("Failed to load chat session.");
+    }
+  };
+
+  const handleArchiveSession = (sessionId: string) => {
+    showConfirmation(
+      {
+        title: "Archive Thread",
+        message:
+          "Are you sure you want to archive this thread? You can access it later from the archived threads section.",
+        confirmText: "Archive",
+        cancelText: "Cancel",
+        variant: "info",
+      },
+      async () => {
+        updateThreadStatusMutation.mutate({
+          threadId: sessionId,
+          data: { isArchived: true },
+        });
+      }
+    );
+  };
+
+  const handleUnarchiveSession = (sessionId: string) => {
+    updateThreadStatusMutation.mutate({
+      threadId: sessionId,
+      data: { isArchived: false },
+    });
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    showConfirmation(
+      {
+        title: "Delete Thread",
+        message:
+          "Are you sure you want to delete this thread? This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        variant: "danger",
+      },
+      async () => {
+        updateThreadStatusMutation.mutate(
+          {
+            threadId: sessionId,
+            data: { isDeleted: true },
+          },
+          {
+            onSuccess: () => {
+              if (selectedThreadId === sessionId) {
+                setSelectedThreadId(null);
+                // Clear from localStorage
+                if (user && agentId) {
+                  const storageKey = `lastSelectedThread_${agentId}_${user.uid}`;
+                  localStorage.removeItem(storageKey);
+                }
+              }
+            },
+          }
+        );
+      }
+    );
+  };
+
   const handleSendMessage = async () => {
-    if (!userMessage.trim() || streaming) return;
+    if (!userMessage.trim() || streaming || !user) return;
 
     const messageText = userMessage;
-    setUserMessage(""); // Clear input immediately
+    setUserMessage("");
 
-    // Update session with message count
-    const sessionId = sessionStorage.getItem("currentSessionId");
-    if (sessionId) {
-      const sessions = JSON.parse(
-        localStorage.getItem("coachAi_sessions") || "[]"
-      );
-      const sessionIndex = sessions.findIndex(
-        (s: { id: string }) => s.id === sessionId
-      );
-      if (sessionIndex !== -1) {
-        // Calculate intent based on message count
-        const messageCount =
-          messages.filter((m) => m.role === "user").length + 1;
-        let intentLevel: "high" | "medium" | "low" = "low";
-        if (messageCount >= 5) intentLevel = "high";
-        else if (messageCount >= 3) intentLevel = "medium";
-
-        sessions[sessionIndex].intentLevel = intentLevel;
-        sessions[sessionIndex].duration = Math.floor(
-          (Date.now() - parseInt(sessionId)) / 1000
-        );
-        localStorage.setItem("coachAi_sessions", JSON.stringify(sessions));
-      }
-    }
-
-    // Send message via Chat API
-    // Pass userName only on first message (when no messages exist yet)
+    const userName = getUserDisplayName(user);
     const isFirstMessage =
       messages.length === 0 ||
       (messages.length === 1 && messages[0].role === "assistant");
+
     await sendChatMessage(
       messageText,
       isFirstMessage ? userName : undefined,
       isTesting
     );
+
+    // Refetch sessions after sending message to update the list
+    refetchActiveSessions();
+    refetchArchivedSessions();
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-148px)] overflow-hidden">
-        <LoadingSpinner message="Loading Agent..." fullScreen />
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner
+          message={isLoading ? "Loading Agent..." : "Authenticating..."}
+          fullScreen
+        />
       </div>
     );
   }
 
-  // Error or not found state
+  // Error state
   if (error || !agent) {
     return (
       <ErrorState
@@ -147,432 +430,869 @@ export default function PublicAgentView({
     );
   }
 
-  // Check if agent is deleted
-  if (agent.isDeleted) {
-    return (
-      <ErrorState
-        title="Agent Not Available"
-        message="This agent is currently not available for chat."
-        fullScreen
-      />
-    );
-  }
+  // Get personalization colors with theme support
+  const personalization = agent.personalization;
 
-  // Check if agent is inactive
-  if (agent.isActive === false) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-md w-full"
-        >
-          <GlassCard className="text-center p-12">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center mx-auto mb-6 shadow-lg"
-            >
-              <Pause size={40} weight="duotone" className="text-white" />
-            </motion.div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              Agent Temporarily Unavailable
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
-              <span className="font-semibold text-gray-900 dark:text-white">
-                {agent.name}
-              </span>{" "}
-              is currently inactive and not accepting conversations.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
-              Please check back later or contact the agent owner for more
-              information.
-            </p>
-          </GlassCard>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Get styling configuration - use personalization if available, otherwise fall back to theme
-  const getStyleConfig = () => {
-    if (agent?.personalization) {
-      const p = agent.personalization;
-      return {
-        headerGradient: `linear-gradient(to right, ${p.headerGradientStart}, ${p.headerGradientEnd})`,
-        chatBackground: p.chatBackgroundColor,
-        senderMessageColor: p.senderMessageBackgroundColor || "#2563eb",
-        incomingMessageColor: p.incomingMessageBackgroundColor || "#f1f5f9",
-        sendButtonColor: p.sendButtonBackgroundColor || "#2563eb",
-        agentAvatar: p.agentAvatar,
-        // For text contrast, we'll use white for dark gradients and dark for light gradients
-        textColor: "#ffffff", // Most gradients work better with white text
-      };
-    } else {
-      // Fallback to theme-based styling
-      return {
-        headerGradient: getGradient(theme, "primary"),
-        chatBackground: "#ffffff",
-        senderMessageColor: getGradient(theme, "primary"),
-        incomingMessageColor: "#f1f5f9",
-        sendButtonColor: getGradient(theme, "primary"),
-        agentAvatar: null,
-        textColor: getContrastTextColor(theme),
-      };
-    }
+  // Default theme colors
+  const defaultLight = {
+    primary: "#667eea",
+    background: "#ffffff",
+    accent: "#667eea",
+    foreground: "#1f2937",
+    border: "#e5e7eb",
+    card: "#f9fafb",
+    "card-foreground": "#1f2937",
   };
 
-  const styleConfig = getStyleConfig();
+  const defaultDark = {
+    primary: "#667eea",
+    background: "#1a1a1a",
+    accent: "#667eea",
+    foreground: "#ffffff",
+    border: "#374151",
+    card: "#2d2d2d",
+    "card-foreground": "#ffffff",
+  };
+
+  // Determine which theme to use
+  const isDark = theme === "dark";
+  const themeColors = isDark
+    ? personalization?.dark || defaultDark
+    : personalization?.light || defaultLight;
+
+  // Theme-aware colors
+  const headerBg = themeColors.primary;
+  const chatBg = themeColors.background;
+  const userMsgBg = themeColors.primary;
+  const botMsgBg = themeColors.card;
+  const sendBtnBg = themeColors.accent;
+  const textColor = themeColors.foreground;
+  const borderColor = themeColors.border;
+  const sidebarBg = isDark ? "#1e1e1e" : "#f9fafb";
+  const sidebarBorder = themeColors.border;
+
+  const regularSessions = activeSessions?.items || [];
+  const archivedSessionsList = archivedSessions?.items || [];
+
+  // Check if current session is archived
+  const isCurrentSessionArchived = archivedSessionsList.some(
+    (session) => session.id === selectedThreadId
+  );
+
+  // Check if auth is required (OAuth enabled and no user)
+  const isAuthRequired = agent?.isOAuthEnabled && !user;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 flex items-center justify-center p-4 overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-5xl h-full max-h-[calc(100vh-2rem)]"
-      >
-        <GlassCard
-          noPadding
-          className="overflow-hidden flex flex-col h-full"
-          glassBodyClassName="flex flex-col h-full"
-        >
-          {/* Header - Sticky */}
-          <div className="relative overflow-hidden flex-shrink-0">
-            {/* Gradient Background */}
-            <div
-              className="absolute inset-0 opacity-90"
-              style={{ backgroundImage: styleConfig.headerGradient }}
-            ></div>
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
+    <div
+      className="h-screen flex overflow-hidden"
+      style={{ backgroundColor: chatBg }}
+    >
+      <Toaster />
+      {/* Auth Modal */}
+      {agent?.isOAuthEnabled && agent.oAuthProviders && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          providers={agent.oAuthProviders
+            .map((providerId) => {
+              const provider = authProviders.find((p) => p.id === providerId);
+              return provider?.name;
+            })
+            .filter((name): name is string => name !== undefined)}
+          onSignIn={handleOAuthSignIn}
+          agentName={agent.name}
+        />
+      )}
 
-            <div className="relative p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30">
-                  {styleConfig.agentAvatar ? (
-                    <img
-                      src={styleConfig.agentAvatar}
-                      alt="Agent Avatar"
-                      className="w-full h-full rounded-xl object-cover"
-                    />
-                  ) : (
-                    <Robot size={24} weight="duotone" className="text-white" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold text-white mb-1 truncate">
-                    {agent.name}
-                  </h1>
-                  <p className="text-white/80 text-xs leading-tight line-clamp-1">
-                    {agent.description || "AI Assistant ready to help you"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {agent.tone && (
-                    <span className="px-2 py-1 bg-white/20 rounded-md text-[10px] font-medium text-white backdrop-blur-sm border border-white/20">
-                      <Sparkle
-                        size={10}
-                        weight="fill"
-                        className="inline mr-0.5"
-                      />
-                      {agent.tone}
-                    </span>
-                  )}
-                  {agent.personality && (
-                    <span className="px-2 py-1 bg-white/20 rounded-md text-[10px] font-medium text-white backdrop-blur-sm border border-white/20">
-                      {agent.personality}
-                    </span>
-                  )}
-                </div>
+      {/* Confirmation Modal */}
+      {!isAuthRequired && (
+        <ConfirmationModal
+          isOpen={confirmationState.isOpen}
+          onClose={hideConfirmation}
+          onConfirm={confirmationState.onConfirm}
+          title={confirmationState.title}
+          message={confirmationState.message}
+          confirmText={confirmationState.confirmText}
+          cancelText={confirmationState.cancelText}
+          variant={confirmationState.variant}
+          isLoading={confirmationState.isLoading}
+        />
+      )}
+
+      {/* Sidebar */}
+      {!isAuthRequired && (
+        <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            />
+
+            {/* Sidebar Panel */}
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed lg:relative left-0 top-0 bottom-0 w-[280px] z-40 flex flex-col"
+              style={{
+                backgroundColor: sidebarBg,
+                borderRight: `1px solid ${sidebarBorder}`,
+              }}
+            >
+              {/* Sidebar Header */}
+              <div
+                className="h-14 p-4 flex items-center justify-between"
+                style={{ borderBottom: `1px solid ${sidebarBorder}` }}
+              >
+                <h2
+                  className="font-semibold text-sm flex items-center gap-2"
+                  style={{ color: textColor }}
+                >
+                  <ListIcon size={18} weight="bold" />
+                  Previous Chats
+                </h2>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-1 rounded transition-colors lg:hidden"
+                  style={{
+                    backgroundColor:
+                      theme === "dark" ? "transparent" : "transparent",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      theme === "dark" ? "#374151" : "#e5e7eb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <XIcon
+                    size={18}
+                    style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                  />
+                </button>
               </div>
+
+              {/* New Chat Button */}
+              <div className="p-3">
+                <button
+                  onClick={handleNewChat}
+                  className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: theme === "dark" ? "#374151" : "#e5e7eb",
+                    color: textColor,
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      theme === "dark" ? "#4b5563" : "#d1d5db")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      theme === "dark" ? "#374151" : "#e5e7eb")
+                  }
+                >
+                  <PlusIcon size={16} weight="bold" />
+                  New Chat
+                </button>
+              </div>
+
+              {/* Chat List */}
+              <div className="flex-1 overflow-y-auto px-3">
+                {/* Previous 7 Days */}
+                {regularSessions.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 uppercase font-semibold mb-2 px-2">
+                      Previous 7 Days
+                    </p>
+                    {regularSessions.map((session) => (
+                      <motion.div
+                        key={session.id}
+                        onClick={() => handleSessionSelect(session.id)}
+                        className="w-full text-left p-2 rounded-lg mb-1 group relative transition-colors cursor-pointer"
+                        style={{
+                          backgroundColor:
+                            currentSession?.id === session.id
+                              ? theme === "dark"
+                                ? "#374151"
+                                : "#e5e7eb"
+                              : "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentSession?.id !== session.id) {
+                            e.currentTarget.style.backgroundColor =
+                              theme === "dark"
+                                ? "rgba(55, 65, 81, 0.5)"
+                                : "rgba(229, 231, 235, 0.5)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentSession?.id !== session.id) {
+                            e.currentTarget.style.backgroundColor =
+                              "transparent";
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="border border-gray-400 rounded-md h-8 w-8 flex items-center justify-center">
+                            <RobotIcon
+                              size={16}
+                              className="text-gray-400 flex-shrink-"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-700 dark:text-white truncate max-w-[80%]">
+                              {session.title}
+                            </p>
+                            <p className="text-xs text-gray-700 dark:text-white">
+                              {formatDistanceToNow(
+                                new Date(session.lastMessageAt),
+                                {
+                                  addSuffix: true,
+                                }
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Actions */}
+                        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchiveSession(session.id);
+                            }}
+                            className="p-1 rounded transition-colors"
+                            style={{
+                              backgroundColor:
+                                theme === "dark" ? "#1f2937" : "#ffffff",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                theme === "dark" ? "#374151" : "#f3f4f6")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                theme === "dark" ? "#1f2937" : "#ffffff")
+                            }
+                            title="Archive"
+                          >
+                            <ArchiveIcon size={12} className="text-gray-400" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSession(session.id);
+                            }}
+                            className="p-1 rounded transition-colors"
+                            style={{
+                              backgroundColor:
+                                theme === "dark" ? "#1f2937" : "#ffffff",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                theme === "dark"
+                                  ? "rgba(127, 29, 29, 0.3)"
+                                  : "rgba(254, 202, 202, 0.5)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.backgroundColor =
+                                theme === "dark" ? "#1f2937" : "#ffffff")
+                            }
+                            title="Delete"
+                          >
+                            <TrashIcon size={12} className="text-red-400" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Archived Chats */}
+                {archivedSessionsList.length > 0 && (
+                  <div className="mb-4">
+                    <button
+                      onClick={() => setShowArchivedChats(!showArchivedChats)}
+                      className="w-full flex items-center justify-between px-2 py-1 text-xs text-gray-500 uppercase font-semibold hover:text-gray-400 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <ArchiveIcon size={14} />
+                        Archived Chats
+                      </span>
+                      <motion.div
+                        animate={{ rotate: showArchivedChats ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CaretRightIcon size={12} />
+                      </motion.div>
+                    </button>
+                    <AnimatePresence>
+                      {showArchivedChats && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          {archivedSessionsList.map((session: ChatSession) => (
+                            <motion.div
+                              key={session.id}
+                              onClick={() => handleSessionSelect(session.id)}
+                              className="w-full text-left p-2 rounded-lg mb-1 group relative transition-colors cursor-pointer"
+                              style={{
+                                backgroundColor:
+                                  currentSession?.id === session.id
+                                    ? theme === "dark"
+                                      ? "#374151"
+                                      : "#e5e7eb"
+                                    : "transparent",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (currentSession?.id !== session.id) {
+                                  e.currentTarget.style.backgroundColor =
+                                    theme === "dark"
+                                      ? "rgba(55, 65, 81, 0.5)"
+                                      : "rgba(229, 231, 235, 0.5)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (currentSession?.id !== session.id) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "transparent";
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="border border-gray-400 rounded-md h-8 w-8 flex items-center justify-center">
+                                  <RobotIcon
+                                    size={16}
+                                    className="text-gray-400 flex-shrink-0"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-700 dark:text-white truncate max-w-[80%]">
+                                    {session.title}
+                                  </p>
+                                  <p className="text-xs text-gray-700 dark:text-white">
+                                    {formatDistanceToNow(
+                                      new Date(session.lastMessageAt),
+                                      {
+                                        addSuffix: true,
+                                      }
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                              {/* Actions */}
+                              <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUnarchiveSession(session.id);
+                                  }}
+                                  className="p-1 rounded transition-colors"
+                                  style={{
+                                    backgroundColor:
+                                      theme === "dark" ? "#1f2937" : "#ffffff",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      theme === "dark"
+                                        ? "rgba(6, 78, 59, 0.3)"
+                                        : "rgba(187, 247, 208, 0.5)")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      theme === "dark" ? "#1f2937" : "#ffffff")
+                                  }
+                                  title="Restore"
+                                >
+                                  <TrayArrowUpIcon
+                                    size={12}
+                                    className="text-green-400"
+                                    weight="fill"
+                                  />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSession(session.id);
+                                  }}
+                                  className="p-1 rounded transition-colors"
+                                  style={{
+                                    backgroundColor:
+                                      theme === "dark" ? "#1f2937" : "#ffffff",
+                                  }}
+                                  onMouseEnter={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      theme === "dark"
+                                        ? "rgba(127, 29, 29, 0.3)"
+                                        : "rgba(254, 202, 202, 0.5)")
+                                  }
+                                  onMouseLeave={(e) =>
+                                    (e.currentTarget.style.backgroundColor =
+                                      theme === "dark" ? "#1f2937" : "#ffffff")
+                                  }
+                                  title="Delete"
+                                >
+                                  <TrashIcon
+                                    size={12}
+                                    className="text-red-400"
+                                  />
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+        </AnimatePresence>
+      )}
+
+      {/* Main Content */}
+      {!isAuthRequired && (
+        <motion.div
+        initial={{
+          width: "100dvw",
+          left: 0,
+        }}
+        animate={{
+          width: !sidebarOpen ? "100dvw" : "calc(100dvw - 280px)",
+          left: !sidebarOpen ? 0 : 280,
+        }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="flex-1 flex flex-col fixed h-dvh"
+      >
+        {/* Top Header */}
+        <div
+          className="h-14 flex items-center justify-between px-4"
+          style={{
+            backgroundColor: chatBg,
+            borderBottom: `1px solid ${borderColor}`,
+          }}
+        >
+          {/* Left: Sidebar Toggle + Agent Name */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg transition-colors"
+              style={{ backgroundColor: "transparent" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  theme === "dark" ? "#374151" : "#e5e7eb")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              {sidebarOpen ? (
+                <CaretLeftIcon
+                  size={20}
+                  style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                />
+              ) : (
+                <ListIcon
+                  size={20}
+                  style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                />
+              )}
+            </button>
+            <div className="flex items-center gap-2">
+              <RobotIcon
+                size={20}
+                className="text-purple-400"
+                weight="duotone"
+              />
+              <span
+                className="font-semibold text-sm"
+                style={{ color: textColor }}
+              >
+                {agent.name}
+              </span>
+              {agent.isActive === false && (
+                <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded">
+                  Latest
+                </span>
+              )}
             </div>
           </div>
 
-          {!isStarted ? (
-            <div className="flex-1 flex items-center justify-center p-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="w-full max-w-md"
+          {/* Right: Temporary Badge + Theme Toggle + User Profile */}
+          <div className="flex items-center gap-3">
+            {user?.isAnonymous && (
+              <span
+                className="text-xs px-3 py-1.5 rounded-full"
+                style={{
+                  backgroundColor: theme === "dark" ? "#374151" : "#e5e7eb",
+                  color: theme === "dark" ? "#d1d5db" : "#6b7280",
+                  border: `1px solid ${borderColor}`,
+                }}
               >
-                <div className="text-center mb-8">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring" }}
-                    className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
-                    style={{ backgroundImage: styleConfig.headerGradient }}
-                  >
-                    <Robot
-                      size={40}
-                      weight="duotone"
-                      style={{ color: styleConfig.textColor }}
+                Temporary
+              </span>
+            )}
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg transition-colors"
+              style={{ backgroundColor: "transparent" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  theme === "dark" ? "#374151" : "#e5e7eb")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+              title={
+                theme === "dark"
+                  ? "Switch to Light Mode"
+                  : "Switch to Dark Mode"
+              }
+            >
+              {theme === "dark" ? (
+                <SunIcon
+                  size={20}
+                  weight="duotone"
+                  className="text-yellow-400"
+                />
+              ) : (
+                <MoonIcon
+                  size={20}
+                  weight="duotone"
+                  className="text-indigo-400"
+                />
+              )}
+            </button>
+            {user && (
+              <div className="relative group">
+                <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt={getUserDisplayName(user)}
+                      className="w-full h-full object-cover"
                     />
-                  </motion.div>
-                  <h2
-                    className="text-2xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r"
-                    style={{ backgroundImage: styleConfig.headerGradient }}
+                  ) : (
+                    <UserIcon size={16} weight="bold" className="text-white" />
+                  )}
+                </button>
+                {/* Dropdown */}
+                <div
+                  className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                  style={{
+                    backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
+                    border: `1px solid ${borderColor}`,
+                  }}
+                >
+                  <div
+                    className="p-3"
+                    style={{ borderBottom: `1px solid ${borderColor}` }}
                   >
-                    Welcome!
-                  </h2>
-                  <p className="text-gray-700 dark:text-gray-300 text-base">
-                    Enter your name to start chatting with{" "}
-                    <span
-                      className="font-semibold bg-clip-text text-transparent bg-gradient-to-r"
-                      style={{ backgroundImage: styleConfig.headerGradient }}
+                    <p
+                      className="text-sm font-medium truncate"
+                      style={{ color: textColor }}
                     >
-                      {agent.name}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10">
-                      <User
-                        size={20}
-                        className="text-gray-400 dark:text-gray-500"
-                        weight="duotone"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleStartChat()}
-                      placeholder="Enter your name"
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
-                    />
+                      {getUserDisplayName(user)}
+                    </p>
+                    {user.email && (
+                      <p
+                        className="text-xs truncate"
+                        style={{
+                          color: theme === "dark" ? "#9ca3af" : "#6b7280",
+                        }}
+                      >
+                        {user.email}
+                      </p>
+                    )}
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleStartChat}
-                    className="w-full px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                    style={{
-                      backgroundImage: styleConfig.headerGradient,
-                      color: styleConfig.textColor,
-                    }}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full px-3 py-2 text-left text-sm text-red-400 transition-colors flex items-center gap-2"
+                    style={{ backgroundColor: "transparent" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        theme === "dark" ? "#374151" : "#f3f4f6")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "transparent")
+                    }
                   >
-                    <span>Start Chat</span>
-                    <PaperPlaneRight size={20} weight="fill" />
-                  </motion.button>
+                    <SignOutIcon size={16} />
+                    Sign Out
+                  </button>
                 </div>
-              </motion.div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chat Messages Area */}
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 && !currentMessage && !selectedThreadId ? (
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4"
+                style={{ background: headerBg }}
+              >
+                <RobotIcon size={40} weight="duotone" className="text-white" />
+              </div>
+              <h2
+                className="text-2xl font-bold mb-2"
+                style={{ color: textColor }}
+              >
+                {agent.name}
+              </h2>
+              <p
+                className="text-sm max-w-md mb-6"
+                style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+              >
+                {agent.description ||
+                  "This AI assistant engages with you to understand your perspectives, challenges, and expectations about the current AI landscape."}
+              </p>
+              {agent.greetingMessage && (
+                <p
+                  className="text-base font-medium max-w-md"
+                  style={{ color: textColor }}
+                >
+                  {agent.greetingMessage}
+                </p>
+              )}
             </div>
           ) : (
-            <>
-              {/* Messages */}
-              <div
-                className="flex-1 overflow-y-auto p-4 space-y-3"
-                style={{ backgroundColor: styleConfig.chatBackground }}
-              >
-                {messages.length === 0 && !currentMessage ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="max-w-3xl mx-auto py-6 px-4 space-y-4">
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-3 ${
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  {msg.role === "assistant" && (
                     <div
-                      className="w-16 h-16 rounded-xl opacity-10 dark:opacity-20 flex items-center justify-center mb-3"
-                      style={{ backgroundImage: styleConfig.headerGradient }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: headerBg }}
                     >
-                      <Robot
-                        size={32}
+                      <RobotIcon
+                        size={16}
                         weight="duotone"
-                        style={{ color: styleConfig.textColor }}
+                        className="text-white"
                       />
                     </div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
-                      Start the conversation by sending a message
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((msg) => (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className={`flex gap-2 ${
-                          msg.role === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {msg.role === "assistant" && (
-                          <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                            style={{
-                              backgroundImage: styleConfig.headerGradient,
-                            }}
-                          >
-                            {styleConfig.agentAvatar ? (
-                              <img
-                                src={styleConfig.agentAvatar}
-                                alt="Agent"
-                                className="w-full h-full rounded-lg object-cover"
-                              />
-                            ) : (
-                              <Robot
-                                size={16}
-                                weight="duotone"
-                                style={{ color: styleConfig.textColor }}
-                              />
-                            )}
-                          </div>
-                        )}
-                        <div
-                          className={`max-w-[70%] px-3 py-2 rounded-xl shadow-sm ${
-                            msg.role === "user"
-                              ? ""
-                              : "text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
-                          }`}
-                          style={
-                            msg.role === "user"
-                              ? {
-                                  backgroundColor:
-                                    styleConfig.senderMessageColor,
-                                  color: "#ffffff",
-                                }
-                              : {
-                                  backgroundColor:
-                                    styleConfig.incomingMessageColor,
-                                }
-                          }
-                        >
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {msg.content}
-                          </p>
-                          <p
-                            className={`text-[10px] mt-1 ${
-                              msg.role === "user"
-                                ? "opacity-60"
-                                : "text-gray-400 dark:text-gray-500"
-                            }`}
-                          >
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                        {msg.role === "user" && (
-                          <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <User
-                              size={16}
-                              weight="duotone"
-                              className="text-gray-600 dark:text-gray-300"
-                            />
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                    {/* Streaming message */}
-                    {currentMessage && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex gap-2 justify-start"
-                      >
-                        <div
-                          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{
-                            backgroundImage: styleConfig.headerGradient,
-                          }}
-                        >
-                          {styleConfig.agentAvatar ? (
-                            <img
-                              src={styleConfig.agentAvatar}
-                              alt="Agent"
-                              className="w-full h-full rounded-lg object-cover"
-                            />
-                          ) : (
-                            <Robot
-                              size={16}
-                              weight="duotone"
-                              style={{ color: styleConfig.textColor }}
-                            />
-                          )}
-                        </div>
-                        <div
-                          className="max-w-[70%] px-3 py-2 rounded-xl text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 shadow-sm"
-                          style={{
-                            backgroundColor: styleConfig.incomingMessageColor,
-                          }}
-                        >
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {currentMessage}
-                            <motion.span
-                              animate={{ opacity: [1, 0] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
-                              className="inline-block w-0.5 h-3.5 ml-0.5"
-                              style={{
-                                backgroundImage: styleConfig.headerGradient,
-                              }}
-                            >
-                              ▋
-                            </motion.span>
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input */}
-              <div className="border-t border-gray-200 dark:border-gray-800 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex-shrink-0">
-                <div className="flex gap-2 items-center">
-                  <div className="flex-1 relative">
-                    <textarea
-                      value={userMessage}
-                      onChange={(e) => setUserMessage(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder="Type your message..."
-                      rows={1}
-                      className="w-full px-4 flex py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-none transition-all"
-                      style={{ minHeight: "42px", maxHeight: "100px" }}
-                    />
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSendMessage}
-                    disabled={!userMessage.trim() || streaming}
-                    className="px-3 py-2.5 rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[42px]"
+                  )}
+                  <div
+                    className="max-w-[70%] px-4 py-2.5 rounded-2xl"
                     style={{
-                      backgroundColor: styleConfig.sendButtonColor,
-                      color: "#ffffff",
+                      backgroundColor:
+                        msg.role === "user" ? userMsgBg : botMsgBg,
+                      color:
+                        msg.role === "user"
+                          ? "#ffffff"
+                          : theme === "dark"
+                          ? "#ffffff"
+                          : "#1f2937",
                     }}
                   >
-                    {streaming ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                    ) : (
-                      <PaperPlaneRight size={18} weight="fill" />
-                    )}
-                  </motion.button>
-                </div>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 text-center">
-                  Press Enter to send, Shift + Enter for new line
-                </p>
-              </div>
-            </>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {user?.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt={getUserDisplayName(user)}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <UserIcon
+                          size={16}
+                          weight="bold"
+                          className="text-white"
+                        />
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+              {/* Show typing indicator when streaming but no message yet */}
+              {streaming && !currentMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-3 justify-start"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: headerBg }}
+                  >
+                    <RobotIcon
+                      size={16}
+                      weight="duotone"
+                      className="text-white"
+                    />
+                  </div>
+                  <div
+                    className="px-4 py-3 rounded-2xl"
+                    style={{ backgroundColor: botMsgBg }}
+                  >
+                    <TypingLoader
+                      dotColor={theme === "dark" ? "#ffffff" : "#1f2937"}
+                      size={6}
+                    />
+                  </div>
+                </motion.div>
+              )}
+              {/* Show streaming message with typewriter effect */}
+              {currentMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex gap-3 justify-start"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: headerBg }}
+                  >
+                    <RobotIcon
+                      size={16}
+                      weight="duotone"
+                      className="text-white"
+                    />
+                  </div>
+                  <div
+                    className="max-w-[70%] px-4 py-2.5 rounded-2xl"
+                    style={{
+                      backgroundColor: botMsgBg,
+                      color: theme === "dark" ? "#ffffff" : "#1f2937",
+                    }}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {currentMessage}
+                      <motion.span
+                        animate={{ opacity: [1, 0] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                        className="inline-block ml-1"
+                      >
+                        ▋
+                      </motion.span>
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           )}
-        </GlassCard>
-      </motion.div>
+        </div>
+
+        {/* Input Area or Archived Notice */}
+        <div
+          className="p-4"
+          style={{
+            backgroundColor: chatBg,
+            borderTop: `1px solid ${borderColor}`,
+          }}
+        >
+          {isCurrentSessionArchived ? (
+            // Archived chat notice
+            <div className="max-w-3xl mx-auto">
+              <div
+                className="flex items-center justify-between px-4 py-3 rounded-xl"
+                style={{
+                  backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6",
+                  border: `1px solid ${
+                    theme === "dark" ? "#4b5563" : "#d1d5db"
+                  }`,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <ArchiveIcon
+                    size={20}
+                    className={
+                      theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    }
+                  />
+                  <p
+                    className="text-sm"
+                    style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                  >
+                    This conversation is archived. To continue, please unarchive
+                    it first.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleUnarchiveSession(selectedThreadId!)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: sendBtnBg,
+                    color: "#ffffff",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.9";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                  }}
+                >
+                  Unarchive Conversation
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Regular input area
+            <div className="max-w-3xl mx-auto flex gap-3 items-end">
+              <textarea
+                value={userMessage}
+                onChange={(e) => setUserMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Hello"
+                rows={1}
+                className="flex-1 px-4 py-3 rounded-xl text-sm resize-none focus:outline-none transition-colors"
+                style={{
+                  minHeight: "48px",
+                  maxHeight: "120px",
+                  backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6",
+                  border: `1px solid ${
+                    theme === "dark" ? "#4b5563" : "#d1d5db"
+                  }`,
+                  color: textColor,
+                }}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!userMessage.trim() || streaming}
+                className="w-12 h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: sendBtnBg }}
+              >
+                <PaperPlaneRightIcon
+                  size={20}
+                  weight="fill"
+                  className="text-white"
+                />
+              </button>
+            </div>
+          )}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

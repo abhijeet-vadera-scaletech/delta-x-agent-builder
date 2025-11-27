@@ -1,5 +1,12 @@
 import { motion } from "framer-motion";
-import { Lock, Bell, Trash, FloppyDisk, UserCircle, Palette } from "phosphor-react";
+import {
+  Lock,
+  Bell,
+  Trash,
+  FloppyDisk,
+  UserCircle,
+  Palette,
+} from "@phosphor-icons/react";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { showToast } from "../utils/toast";
@@ -25,7 +32,8 @@ export default function Settings() {
     newPassword: "",
     confirmPassword: "",
   });
-  const { confirmationState, showConfirmation, hideConfirmation } = useConfirmation();
+  const { confirmationState, showConfirmation, hideConfirmation } =
+    useConfirmation();
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +64,8 @@ export default function Settings() {
     showConfirmation(
       {
         title: "Delete Account",
-        message: "Are you sure you want to delete your account? This action cannot be undone.",
+        message:
+          "Are you sure you want to delete your account? This action cannot be undone.",
         confirmText: "Delete Account",
         cancelText: "Cancel",
         variant: "danger",
@@ -109,7 +118,9 @@ export default function Settings() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="flex gap-3 flex-wrap"
       >
-        {(["account", "notifications", "security", "personalization"] as const).map((tab) => (
+        {(
+          ["account", "notifications", "security", "personalization"] as const
+        ).map((tab) => (
           <motion.button
             key={tab}
             whileHover={{ scale: 1.02 }}

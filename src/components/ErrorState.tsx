@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { WarningCircle, ArrowsClockwise } from "phosphor-react";
+import { WarningCircle, ArrowsClockwise } from "@phosphor-icons/react";
 import { GlassCard } from "./GlassCard";
 import { GlassButton } from "./GlassButton";
 

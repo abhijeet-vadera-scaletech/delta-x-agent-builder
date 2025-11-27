@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { API_CONFIG } from "../shared/constants";
 import type { ChatMessage, ChatThread, StreamEvent } from "../types";
+import { getIdToken } from "../services/authService";
 
 interface UseChatOptions {
   agentId: string;
+  threadId?: string;
   onError?: (error: Error) => void;
 }
 
@@ -17,61 +19,45 @@ interface ChatState {
   thread: ChatThread | null;
 }
 
-interface ChatSessionData {
-  threadId: string;
-  userId: string;
-  agentId: string;
-}
-
-export const useChat = ({ agentId, onError }: UseChatOptions) => {
-  const [state, setState] = useState<ChatState>(() => {
-    // Try to load existing session from localStorage
-    const storedSession = localStorage.getItem(`chat_session_${agentId}`);
-    if (storedSession) {
-      try {
-        const session: ChatSessionData = JSON.parse(storedSession);
-        return {
-          messages: [],
-          currentMessage: "",
-          displayedMessage: "",
-          streaming: false,
-          threadId: session.threadId,
-          userId: session.userId,
-          thread: null,
-        };
-      } catch (e) {
-        console.error("Error parsing stored session:", e);
-      }
-    }
-    return {
-      messages: [],
-      currentMessage: "",
-      displayedMessage: "",
-      streaming: false,
-      threadId: null,
-      userId: null,
-      thread: null,
-    };
+export const useChat = ({
+  agentId,
+  threadId: initialThreadId,
+  onError,
+}: UseChatOptions) => {
+  const [state, setState] = useState<ChatState>({
+    messages: [],
+    currentMessage: "",
+    displayedMessage: "",
+    streaming: false,
+    threadId: initialThreadId || null,
+    userId: null,
+    thread: null,
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const messageBufferRef = useRef<string>("");
 
-  // Save session to localStorage whenever threadId or userId changes
+  // Refs to track latest threadId and userId for API calls
+  const threadIdRef = useRef<string | null>(state.threadId);
+  const userIdRef = useRef<string | null>(state.userId);
+
+  // Update threadId when initialThreadId prop changes (when user selects different session)
   useEffect(() => {
-    if (state.threadId && state.userId) {
-      const sessionData: ChatSessionData = {
-        threadId: state.threadId,
-        userId: state.userId,
-        agentId,
-      };
-      localStorage.setItem(
-        `chat_session_${agentId}`,
-        JSON.stringify(sessionData)
-      );
+    // Update threadId when it changes (including when it becomes null for new chat)
+    if (initialThreadId !== state.threadId) {
+      setState((prev) => ({
+        ...prev,
+        threadId: initialThreadId || null,
+      }));
     }
-  }, [state.threadId, state.userId, agentId]);
+  }, [initialThreadId, state.threadId]);
+
+  // Update refs whenever state changes
+  useEffect(() => {
+    threadIdRef.current = state.threadId;
+    userIdRef.current = state.userId;
+  }, [state.threadId, state.userId]);
 
   // Typing effect: gradually reveal characters from currentMessage
   useEffect(() => {
@@ -97,8 +83,8 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
       const targetMessage = messageBufferRef.current;
 
       if (currentIndex < targetMessage.length) {
-        // Add 1-3 characters at a time for smoother effect
-        const charsToAdd = Math.min(3, targetMessage.length - currentIndex);
+        // Add 1-2 characters at a time for typewriter effect
+        const charsToAdd = Math.min(2, targetMessage.length - currentIndex);
         currentIndex += charsToAdd;
 
         setState((prev) => ({
@@ -112,7 +98,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
           typingIntervalRef.current = null;
         }
       }
-    }, 30); // 30ms interval for smooth typing
+    }, 20); // 20ms interval for smooth typewriter effect
 
     return () => {
       if (typingIntervalRef.current) {
@@ -149,6 +135,9 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
         // Create abort controller for this request
         abortControllerRef.current = new AbortController();
 
+        // Get Firebase ID token for authentication
+        const idToken = await getIdToken();
+
         // Build request body
         const requestBody: {
           agentId: string;
@@ -163,24 +152,39 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
           environment: isTestMode ? "test" : "live",
         };
 
+        // Use refs to get the latest threadId and userId values
+        const currentThreadId = threadIdRef.current;
+        const currentUserId = userIdRef.current;
+
         // Add threadId and userId if they exist (for continuing conversation)
-        if (state.threadId) {
-          requestBody.threadId = state.threadId;
+        if (currentThreadId) {
+          requestBody.threadId = currentThreadId;
         }
-        if (state.userId) {
-          requestBody.userId = state.userId;
+        if (currentUserId) {
+          requestBody.userId = currentUserId;
         }
 
         // Add userName only on first message (when no threadId exists)
-        if (!state.threadId && userName) {
+        if (!currentThreadId && userName) {
           requestBody.userName = userName;
+        }
+
+        // Build headers
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        // Add Authorization header with ID token if available
+        console.log("🚀 ~ useChat ~ idToken:", idToken);
+        if (idToken) {
+          headers["Authorization"] = `Bearer ${idToken}`;
         }
 
         const response = await fetch(
           `${API_CONFIG.baseUrl}${API_CONFIG.path.chatSend}`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(requestBody),
             signal: abortControllerRef.current.signal,
           }
@@ -197,8 +201,8 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
 
         const decoder = new TextDecoder();
         let assistantMessage = "";
-        let newThreadId = state.threadId;
-        let newUserId = state.userId;
+        let newThreadId = threadIdRef.current;
+        let newUserId = userIdRef.current;
         let newThread = state.thread;
 
         // eslint-disable-next-line no-constant-condition
@@ -261,12 +265,20 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
                     // These events indicate processing is happening
                     // No action needed, just log for debugging
                     console.log(`[Chat] ${data.type}`, data);
+                    setState((prev) => ({
+                      ...prev,
+                      streaming: true,
+                    }));
                     break;
 
                   case "thread.message.created":
                   case "thread.message.in_progress":
                     // Message is being created/processed
                     // No action needed yet
+                    setState((prev) => ({
+                      ...prev,
+                      streaming: true,
+                    }));
                     break;
 
                   case "thread.message.delta": {
@@ -316,6 +328,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
                       messages: [...prev.messages, completedMessage],
                       currentMessage: "",
                       displayedMessage: "",
+                      streaming: false,
                     }));
                     break;
                   }
@@ -323,6 +336,10 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
                   case "thread.run.completed":
                     // Run is complete
                     console.log("[Chat] Run completed", data);
+                    setState((prev) => ({
+                      ...prev,
+                      streaming: false,
+                    }));
                     break;
 
                   case "done":
@@ -355,29 +372,18 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
         }
       }
     },
-    [
-      agentId,
-      state.threadId,
-      state.userId,
-      state.thread,
-      state.streaming,
-      onError,
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.streaming, state.thread, agentId, onError]
+    // Note: state.threadId and state.userId are intentionally excluded
+    // We use refs (threadIdRef, userIdRef) to access the latest values
   );
 
-  const addGreetingMessage = useCallback((greetingText: string) => {
-    const greetingMessage: ChatMessage = {
-      id: `greeting_${Date.now()}`,
-      messageId: `greeting_${Date.now()}`,
-      threadId: "",
-      role: "assistant",
-      content: greetingText,
-      createdAt: new Date().toISOString(),
-    };
+  // Removed addGreetingMessage - greeting should be shown in UI only, not as a message
 
+  const setMessages = useCallback((messages: ChatMessage[]) => {
     setState((prev) => ({
       ...prev,
-      messages: [greetingMessage],
+      messages,
     }));
   }, []);
 
@@ -416,7 +422,7 @@ export const useChat = ({ agentId, onError }: UseChatOptions) => {
     userId: state.userId,
     thread: state.thread,
     sendMessage,
-    addGreetingMessage,
+    setMessages,
     clearChat,
     cancelStream,
   };

@@ -11,7 +11,7 @@ import {
   ArrowsClockwise,
   Play,
   Pause,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -60,7 +60,7 @@ export default function Agents() {
   const userAgents = agents.filter((a: Agent) => a.userId === currentUser?.id);
 
   const handleCopyPublicUrl = (agentId: string) => {
-    const url = `${window.location.origin}/agent/${agentId}`;
+    const url = `${window.location.origin}/agent/test/${agentId}`;
     navigator.clipboard.writeText(url);
     setCopiedId(agentId);
     showToast.success("URL copied to clipboard! 📋");
@@ -381,7 +381,7 @@ export default function Agents() {
                             </button>
                             <button
                               onClick={() =>
-                                window.open(`/agent/${agent.id}`, "_blank")
+                                window.open(`/agent/test/${agent.id}`, "_blank")
                               }
                               title="View public page"
                               className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"

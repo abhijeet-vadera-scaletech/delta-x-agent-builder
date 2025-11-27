@@ -7,7 +7,7 @@ import {
   Circle,
   CurrencyDollar,
   Clock,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { showToast } from "../utils/toast";

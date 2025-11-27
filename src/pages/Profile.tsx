@@ -6,7 +6,7 @@ import {
   FloppyDisk,
   UserCircle,
   Camera,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
 import ErrorState from "../components/ErrorState";
 import { GlassButton } from "../components/GlassButton";

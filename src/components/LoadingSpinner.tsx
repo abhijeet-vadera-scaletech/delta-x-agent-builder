@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Brain } from "phosphor-react";
+import { Brain } from "@phosphor-icons/react";
 import { useTheme } from "../context/ThemeContext";
 import { getGradient } from "../config/theme";
 

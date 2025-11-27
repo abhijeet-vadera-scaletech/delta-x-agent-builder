@@ -42,7 +42,10 @@ export const API_CONFIG = {
     chatMessages: (threadId: string) => `/api/chat/messages/${threadId}`,
     chatThreads: (agentId: string) => `/api/chat/threads/${agentId}`,
     chatThread: (threadId: string) => `/api/chat/thread/${threadId}`,
+    chatThreadStatus: (threadId: string) =>
+      `/api/chat/thread/${threadId}/status`,
     chatStats: (agentId: string) => `/api/chat/stats/${agentId}`,
+    chatSessions: "/api/chat/sessions",
 
     // Personalization
     personalizations: "/api/personalizations",
@@ -54,7 +57,94 @@ export const API_CONFIG = {
     analyticsHighIntentUsers: "/api/analytics/high-intent-users",
     analyticsAIInsights: "/api/analytics/ai-insights",
     analyticsComplete: "/api/analytics/complete",
+
+    // Auth Providers
+    authProviders: "/api/auth/providers",
   },
 };
 
 export const DEFAULT_ITEMS_PER_PAGE = 25;
+
+export const DEFAULT_THEME_PRESET = {
+  light: {
+    primary: "#667eea",
+    background: "#ffffff",
+    accent: "#667eea",
+    highlight: "#f3f4f6",
+    secondary: "#667eea",
+    foreground: "#1f2937",
+    border: "#e5e7eb",
+    card: "#f9fafb",
+    "card-foreground": "#1f2937",
+    destructive: "#ef4444",
+  },
+  dark: {
+    primary: "#667eea",
+    background: "#1a1a1a",
+    accent: "#667eea",
+    highlight: "#374151",
+    secondary: "#667eea",
+    foreground: "#ffffff",
+    border: "#374151",
+    card: "#2d2d2d",
+    "card-foreground": "#ffffff",
+    destructive: "#ef4444",
+  },
+};
+
+// React Select Dark Mode Styles
+// Note: Using 'any' types as required by react-select's style API
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export const getReactSelectStyles = () => {
+  const isDark = document.documentElement.classList.contains("dark");
+
+  return {
+    control: (base: any) => ({
+      ...base,
+      backgroundColor: isDark ? "#374151" : "#ffffff",
+      borderColor: isDark ? "#4b5563" : "#d1d5db",
+    }),
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: isDark ? "#374151" : "#ffffff",
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused
+        ? isDark
+          ? "#4b5563"
+          : "#f3f4f6"
+        : "transparent",
+      color: isDark ? "#ffffff" : "#111827",
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      backgroundColor: isDark ? "#4b5563" : "#e5e7eb",
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: isDark ? "#ffffff" : "#111827",
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      color: isDark ? "#ffffff" : "#111827",
+      ":hover": {
+        backgroundColor: isDark ? "#374151" : "#d1d5db",
+        color: isDark ? "#ffffff" : "#111827",
+      },
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: isDark ? "#ffffff" : "#111827",
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: isDark ? "#ffffff" : "#111827",
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: isDark ? "#9ca3af" : "#6b7280",
+    }),
+  };
+};
+/* eslint-enable @typescript-eslint/no-explicit-any */

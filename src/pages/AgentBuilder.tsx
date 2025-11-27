@@ -17,13 +17,14 @@ import {
   Files,
   UploadSimple,
   Palette,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { GlassButton } from "../components/GlassButton";
 import Modal from "../components/Modal";
-import { ChatPreview } from "../components/ui";
+import { ChatPreview, ToggleSwitch } from "../components/ui";
+import Select from "react-select";
 import { getGradient } from "../config/theme";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -36,9 +37,11 @@ import {
   useEnhancePrompt,
   type UploadedFile,
 } from "../hooks";
+import { useGetAuthProviders } from "../hooks/get/useGetAuthProviders";
 import { useGetAgents } from "../hooks/get/useGetAgents";
 import { useGetKnowledgeBases } from "../hooks/get/useGetKnowledgeBases";
 import { showToast } from "../utils/toast";
+import { getReactSelectStyles } from "../shared/constants";
 
 interface KnowledgeBase {
   id: string;
@@ -89,6 +92,7 @@ export default function AgentBuilder() {
   const { items: knowledgeBasesData = [] } = knowledgeBasesResponse || {};
   const { data: personalizationsResponse } = useGetPersonalizations();
   const { items: personalizations = [] } = personalizationsResponse || {};
+  const { data: authProviders = [] } = useGetAuthProviders();
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -205,6 +209,8 @@ export default function AgentBuilder() {
     systemInstructions: "",
     tone: "Supportive and encouraging",
     personality: "Professional",
+    isOAuthEnabled: false,
+    oAuthProviders: [] as string[],
   });
 
   // Load existing agent data if editing
@@ -222,6 +228,8 @@ export default function AgentBuilder() {
           systemInstructions: agent.systemInstructions || "",
           tone: agent.tone || "Supportive and encouraging",
           personality: agent.personality || "Professional",
+          isOAuthEnabled: agent.isOAuthEnabled || false,
+          oAuthProviders: agent.oAuthProviders || [],
         });
 
         // Set personalization if available
@@ -475,6 +483,8 @@ export default function AgentBuilder() {
             tone: formData.tone,
             personality: formData.personality,
             personalizationId: selectedPersonalizationId || null,
+            isOAuthEnabled: formData.isOAuthEnabled,
+            oAuthProviders: formData.oAuthProviders,
           },
         },
         {
@@ -501,6 +511,8 @@ export default function AgentBuilder() {
         personality: formData.personality,
         model: "gpt-4o-mini" as const, // Default model
         hasFileSearch: selectedKBs.length > 0,
+        isOAuthEnabled: formData.isOAuthEnabled,
+        oAuthProviders: formData.oAuthProviders,
         ...(selectedKB &&
           selectedKBs.length > 0 && {
             vectorStoreId: selectedKB.vectorStoreId,
@@ -574,9 +586,23 @@ export default function AgentBuilder() {
         </div>
       </motion.div>
 
-      {/* Wizard Steps Indicator */}
-      <div className="mb-8">
+      {/* Wizard Steps Indicator with Navigation */}
+      <div className="mb-8 relative">
         <div className="flex items-center justify-center gap-4">
+          {/* Back Button - Left Side */}
+          {currentStep > 1 && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+              <GlassButton
+                onClick={() =>
+                  setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4)
+                }
+                className="flex items-center gap-2 rounded-full w-12 h-12 p-0 justify-center shadow-lg"
+              >
+                <ChevronLeft size={24} />
+              </GlassButton>
+            </div>
+          )}
+
           {/* Step 1 */}
           <div className="flex items-center">
             <div
@@ -649,6 +675,57 @@ export default function AgentBuilder() {
               Personalization
             </span>
           </div>
+
+          {/* Next Button - Right Side */}
+          {currentStep < 4 ? (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <GlassButton
+                onClick={() => {
+                  if (currentStep === 1 && !selectedTemplate) return;
+                  if (
+                    currentStep === 2 &&
+                    (!formData.name || !formData.systemInstructions)
+                  )
+                    return;
+                  setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4);
+                }}
+                disabled={
+                  (currentStep === 1 && !selectedTemplate) ||
+                  (currentStep === 2 &&
+                    (!formData.name || !formData.systemInstructions))
+                }
+                className="flex items-center gap-2 rounded-full w-12 h-12 p-0 justify-center shadow-lg"
+              >
+                <ChevronRight size={24} />
+              </GlassButton>
+            </div>
+          ) : (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              {currentStep === 4 && (
+                <GlassButton
+                  onClick={handleCreateAgent}
+                  disabled={
+                    createAgentMutation.isPending ||
+                    updateAgentMutation.isPending ||
+                    !selectedTemplate ||
+                    !formData.name ||
+                    !formData.systemInstructions
+                  }
+                  useGradient
+                >
+                  <Save size={20} />
+                  {createAgentMutation.isPending ||
+                  updateAgentMutation.isPending
+                    ? isEditing
+                      ? "Updating..."
+                      : "Creating..."
+                    : isEditing
+                    ? "Update Agent"
+                    : "Create Agent"}
+                </GlassButton>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -692,16 +769,6 @@ export default function AgentBuilder() {
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="p-6 flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
-              <GlassButton
-                onClick={() => setCurrentStep(2)}
-                disabled={!selectedTemplate}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight size={20} />
-              </GlassButton>
             </div>
           </motion.div>
         )}
@@ -816,6 +883,65 @@ export default function AgentBuilder() {
 
                 {/* Right Column - System Instructions Markdown Editor */}
                 <div className="space-y-4">
+                  {/* OAuth Configuration - 2 Column Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Enable OAuth */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        Enable OAuth
+                      </label>
+                      <ToggleSwitch
+                        enabled={formData.isOAuthEnabled}
+                        color="primary"
+                        onChange={(enabled) =>
+                          setFormData({
+                            ...formData,
+                            isOAuthEnabled: enabled,
+                            oAuthProviders: enabled
+                              ? formData.oAuthProviders
+                              : [],
+                          })
+                        }
+                        label={formData.isOAuthEnabled ? "Enabled" : "Disabled"}
+                      />
+                    </div>
+
+                    {/* OAuth Providers */}
+                    {formData.isOAuthEnabled && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                          OAuth Providers
+                        </label>
+                        <Select
+                          isMulti
+                          value={authProviders
+                            .filter((provider) =>
+                              formData.oAuthProviders.includes(provider.id)
+                            )
+                            .map((provider) => ({
+                              value: provider.id,
+                              label: provider.displayName,
+                            }))}
+                          onChange={(selected) =>
+                            setFormData({
+                              ...formData,
+                              oAuthProviders: selected
+                                ? selected.map((s) => s.value)
+                                : [],
+                            })
+                          }
+                          options={authProviders.map((provider) => ({
+                            value: provider.id,
+                            label: provider.displayName,
+                          }))}
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          placeholder="Select OAuth providers..."
+                          styles={getReactSelectStyles()}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-900 dark:text-white">
@@ -829,7 +955,7 @@ export default function AgentBuilder() {
                           enhancePromptMutation.isPending ||
                           !formData.systemInstructions.trim()
                         }
-                        className="flex items-center gap-1 text-xs px-3 py-1"
+                        className="flex items-center gap-1 text-xs px-3 py-1 relative z-0"
                         variant="gradient"
                       >
                         <Sparkles size={14} />
@@ -934,23 +1060,6 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="px-6 pb-4 flex justify-between gap-3">
-              <GlassButton
-                onClick={() => setCurrentStep(1)}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft size={20} />
-                Back
-              </GlassButton>
-              <GlassButton
-                onClick={() => setCurrentStep(3)}
-                disabled={!formData.name || !formData.systemInstructions}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight size={20} />
-              </GlassButton>
             </div>
           </motion.div>
         )}
@@ -1069,27 +1178,6 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                 </div>
               )}
             </div>
-            <div className="p-6 flex justify-between gap-3">
-              <GlassButton
-                onClick={() => setCurrentStep(2)}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft size={20} />
-                Back
-              </GlassButton>
-              <GlassButton
-                onClick={() => setCurrentStep(4)}
-                disabled={
-                  !selectedTemplate ||
-                  !formData.name ||
-                  !formData.systemInstructions
-                }
-                className="flex items-center gap-2"
-              >
-                Next
-                <ChevronRight size={20} />
-              </GlassButton>
-            </div>
           </motion.div>
         )}
 
@@ -1149,36 +1237,13 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                           <div className="mb-3">
                             <ChatPreview
                               config={{
-                                headerGradientStart:
-                                  personalization.headerGradientStart,
-                                headerGradientEnd:
-                                  personalization.headerGradientEnd,
-                                chatBackgroundColor:
-                                  personalization.chatBackgroundColor,
-                                senderMessageBackgroundColor:
-                                  personalization.senderMessageBackgroundColor ||
-                                  "#2563eb",
-                                incomingMessageBackgroundColor:
-                                  personalization.incomingMessageBackgroundColor ||
-                                  "#f1f5f9",
-                                sendButtonBackgroundColor:
-                                  personalization.sendButtonBackgroundColor ||
-                                  "#2563eb",
-                                agentAvatar: personalization.agentAvatar,
-                                senderMessageTextColor:
-                                  personalization.senderMessageTextColor ||
-                                  "#ffffff",
-                                incomingMessageTextColor:
-                                  personalization.incomingMessageTextColor ||
-                                  "#000000",
-                                sendButtonTextColor:
-                                  personalization.sendButtonTextColor ||
-                                  "#ffffff",
-                                inputBackgroundColor:
-                                  personalization.inputBackgroundColor ||
-                                  "#ffffff",
-                                inputTextColor:
-                                  personalization.inputTextColor || "#000000",
+                                agentAvatar: personalization.agentAvatar || "",
+                                enableBorder: personalization.enableBorder,
+                                borderWidth: personalization.borderWidth,
+                                borderStyle: personalization.borderStyle,
+                                themeMode: personalization.themeMode,
+                                light: personalization.light,
+                                dark: personalization.dark,
                               }}
                               size="small"
                               showInput={false}
@@ -1207,35 +1272,6 @@ You are a **Business Strategy Assistant** specialized in helping entrepreneurs.
                   })}
                 </div>
               )}
-            </div>
-            <div className="p-6 flex justify-between gap-3 border-t border-gray-200 dark:border-gray-700">
-              <GlassButton
-                onClick={() => setCurrentStep(3)}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft size={20} />
-                Back
-              </GlassButton>
-              <GlassButton
-                onClick={handleCreateAgent}
-                disabled={
-                  createAgentMutation.isPending ||
-                  updateAgentMutation.isPending ||
-                  !selectedTemplate ||
-                  !formData.name ||
-                  !formData.systemInstructions
-                }
-                useGradient
-              >
-                <Save size={20} />
-                {createAgentMutation.isPending || updateAgentMutation.isPending
-                  ? isEditing
-                    ? "Updating..."
-                    : "Creating..."
-                  : isEditing
-                  ? "Update Agent"
-                  : "Create Agent"}
-              </GlassButton>
             </div>
           </motion.div>
         )}

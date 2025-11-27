@@ -9,7 +9,7 @@ import {
   Trash,
   UploadSimple,
   X,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import Select from "react-select";
 import ErrorState from "../components/ErrorState";

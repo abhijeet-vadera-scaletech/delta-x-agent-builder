@@ -7,7 +7,7 @@ import {
   SignOut,
   Sun,
   User as UserIcon,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getContrastTextColor, getGradientDiagonal } from "../config/theme";

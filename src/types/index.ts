@@ -83,6 +83,8 @@ export interface Agent {
   updatedAt: string;
   personalization?: Personalization;
   user?: User;
+  isOAuthEnabled?: boolean;
+  oAuthProviders?: string[];
 }
 
 export interface MetaResponse {
@@ -103,6 +105,8 @@ export interface CreateAgentRequest {
   hasFileSearch?: boolean;
   vectorStoreId?: string;
   personalizationId?: string | null;
+  isOAuthEnabled?: boolean;
+  oAuthProviders?: string[];
 }
 
 export interface UpdateAgentRequest {
@@ -114,6 +118,8 @@ export interface UpdateAgentRequest {
   personality?: string;
   vectorStoreId?: string;
   personalizationId?: string | null;
+  isOAuthEnabled?: boolean;
+  oAuthProviders?: string[];
 }
 
 export interface AgentStats {
@@ -229,54 +235,54 @@ export interface Personalization extends PersonalizationConfig {
   updatedAt: string;
 }
 
+export interface ThemeColors {
+  primary: string;
+  background: string;
+  accent: string;
+  highlight?: string;
+  secondary: string;
+  foreground: string;
+  border: string;
+  card: string;
+  "card-foreground": string;
+  destructive: string;
+}
+
 export interface PersonalizationConfig {
   name?: string;
-  headerGradientStart: string;
-  headerGradientEnd: string;
-  chatBackgroundColor: string;
-  senderMessageBackgroundColor: string; // Background color for sender messages
-  incomingMessageBackgroundColor: string; // Background color for incoming messages
-  sendButtonBackgroundColor: string; // Background color for send button
   agentAvatar?: string;
-  // Optional text colors (will use defaults if not provided)
-  senderMessageTextColor?: string;
-  incomingMessageTextColor?: string;
-  sendButtonTextColor?: string;
-  inputBackgroundColor?: string;
-  inputTextColor?: string;
+  // Border options
+  enableBorder: boolean;
+  borderWidth: string; // e.g., "1px", "2px", "0.5em"
+  borderStyle: "solid" | "dashed" | "dotted";
+  // Theme mode preference
+  themeMode: "system" | "light" | "dark";
+  // Theme colors
+  light: ThemeColors;
+  dark: ThemeColors;
 }
 
 export interface CreatePersonalizationRequest {
   name: string;
   agentAvatar?: string;
-  headerGradientStart: string;
-  headerGradientEnd: string;
-  senderMessageBackgroundColor: string;
-  incomingMessageBackgroundColor: string;
-  sendButtonBackgroundColor: string;
-  chatBackgroundColor: string;
-  inputBackgroundColor: string;
-  inputTextColor: string;
-  incomingMessageTextColor: string;
-  senderMessageTextColor: string;
-  sendButtonTextColor: string;
+  enableBorder: boolean;
+  borderWidth: string;
+  borderStyle: "solid" | "dashed" | "dotted";
+  themeMode: "system" | "light" | "dark";
+  light: ThemeColors;
+  dark: ThemeColors;
   agentIds?: string[]; // Array of agent IDs to attach this personalization to
 }
 
 export interface UpdatePersonalizationRequest {
   name?: string;
   agentAvatar?: string;
-  headerGradientStart?: string;
-  headerGradientEnd?: string;
-  senderMessageBackgroundColor?: string;
-  incomingMessageBackgroundColor?: string;
-  sendButtonBackgroundColor?: string;
-  chatBackgroundColor?: string;
-  inputBackgroundColor?: string;
-  inputTextColor?: string;
-  incomingMessageTextColor?: string;
-  senderMessageTextColor?: string;
-  sendButtonTextColor?: string;
+  enableBorder?: boolean;
+  borderWidth?: string;
+  borderStyle?: "solid" | "dashed" | "dotted";
+  themeMode?: "system" | "light" | "dark";
+  light?: ThemeColors;
+  dark?: ThemeColors;
   agentIds?: string[]; // Array of agent IDs to attach this personalization to
 }
 
@@ -343,3 +349,21 @@ export interface AnalyticsQueryParams {
   intentLevel?: IntentLevel;
   limit?: number;
 }
+
+// Public Chat Session Types
+export interface PublicChatSession {
+  id: string;
+  agentId: string;
+  userId: string;
+  threadId?: string;
+  title: string;
+  lastMessage?: string;
+  lastMessageAt: string;
+  messageCount: number;
+  isArchived: boolean;
+  isTemporary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ChatSessionType = "all" | "temporary" | "archived";

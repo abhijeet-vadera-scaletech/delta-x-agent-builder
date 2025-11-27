@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Warning, X } from "phosphor-react";
+import { Warning, X } from "@phosphor-icons/react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -24,7 +24,6 @@ export default function ConfirmationModal({
   variant = "danger",
   isLoading = false,
 }: ConfirmationModalProps) {
-
   const getVariantStyles = () => {
     switch (variant) {
       case "danger":
@@ -111,7 +110,11 @@ export default function ConfirmationModal({
               {/* Icon */}
               <div className="flex items-center justify-center mb-4">
                 <div className={`p-3 rounded-full ${styles.iconBg}`}>
-                  <Warning size={32} weight="duotone" className={styles.iconColor} />
+                  <Warning
+                    size={32}
+                    weight="duotone"
+                    className={styles.iconColor}
+                  />
                 </div>
               </div>
 

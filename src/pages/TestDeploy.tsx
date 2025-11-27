@@ -8,7 +8,7 @@ import {
   ArrowSquareOut,
   Code,
   Circle,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { GlassCard } from "../components/GlassCard";
 import { GlassButton } from "../components/GlassButton";

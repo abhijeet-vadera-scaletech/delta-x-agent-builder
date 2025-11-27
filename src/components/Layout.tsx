@@ -4,7 +4,7 @@ import Sidebar from "./SidebarModern";
 import TopBar from "./TopBarModern";
 import { GlassCard } from "./GlassCard";
 import { AnimationType } from "./AnimatedIcon";
-import { Icon } from "phosphor-react";
+import { Icon } from "@phosphor-icons/react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -37,7 +37,7 @@ export default function Layout({
 
       {/* Main Content Area */}
       <div className="flex-1 md:ml-72 relative">
-        <div className="fixed top-0 left-0 w-full h-[150px] bg-gradient-to-b from-white to-transparent dark:from-gray-900 dark:to-transparent z-10"></div>
+        <div className="fixed top-0 left-0 w-full h-[100px] bg-gradient-to-b from-white to-transparent dark:from-gray-900 dark:to-transparent z-10"></div>
         {/* Top Bar with Glass Effect */}
         <motion.div
           className="sticky top-0 z-30 p-4 pb-0"
@@ -56,7 +56,7 @@ export default function Layout({
 
         {/* Page Content with Card Container */}
         <motion.main
-          className="p-4 lg:p-6 relative z-20"
+          className="p-4 lg:p-6"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{

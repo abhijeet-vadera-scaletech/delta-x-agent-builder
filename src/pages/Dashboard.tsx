@@ -9,7 +9,7 @@ import {
   Target,
   TrendUp,
   Users,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import ErrorState from "../components/ErrorState";
 import { GlassCard, StatCard } from "../components/GlassCard";

@@ -1,20 +1,8 @@
-import { PaperPlaneTilt, Robot } from "phosphor-react";
+import { PaperPlaneTilt, Robot } from "@phosphor-icons/react";
+import { PersonalizationConfig } from "../../types";
+import { DEFAULT_THEME_PRESET } from "@/shared/constants";
 
-export interface ChatPreviewConfig {
-  headerGradientStart: string;
-  headerGradientEnd: string;
-  chatBackgroundColor: string;
-  senderMessageBackgroundColor: string; // Background color for sender messages
-  incomingMessageBackgroundColor: string; // Background color for incoming messages
-  sendButtonBackgroundColor: string; // Background color for send button
-  agentAvatar?: string;
-  // Optional text colors (will use defaults if not provided)
-  senderMessageTextColor?: string;
-  incomingMessageTextColor?: string;
-  sendButtonTextColor?: string;
-  inputBackgroundColor?: string;
-  inputTextColor?: string;
-}
+export interface ChatPreviewConfig extends PersonalizationConfig {}
 
 interface ChatPreviewProps {
   config: ChatPreviewConfig;
@@ -91,15 +79,31 @@ export function ChatPreview({
 }: ChatPreviewProps) {
   const sizes = sizeConfig[size];
 
+  // Determine which theme to use based on themeMode
+  const isDark =
+    config.themeMode === "dark" ||
+    (config.themeMode === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  console.log("🚀 ~ ChatPreview ~ isDark:", isDark);
+  const theme = isDark
+    ? config.dark || DEFAULT_THEME_PRESET.dark
+    : config.light || DEFAULT_THEME_PRESET.light;
+
+  // Border style
+  const borderStyle = config.enableBorder
+    ? `${config.borderWidth} ${config.borderStyle} ${theme.border}`
+    : "none";
+
   return (
     <div
-      className={`rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+      className={`rounded-lg overflow-hidden shadow-sm ${className}`}
+      style={{ border: borderStyle }}
     >
       {/* Chat Header */}
       <div
         className={`${sizes.header} flex items-center gap-2`}
         style={{
-          background: `linear-gradient(to right, ${config.headerGradientStart}, ${config.headerGradientEnd})`,
+          backgroundColor: theme.primary,
         }}
       >
         <div
@@ -130,7 +134,7 @@ export function ChatPreview({
       {/* Chat Messages */}
       <div
         className={`${sizes.messages} ${sizes.container}`}
-        style={{ backgroundColor: config.chatBackgroundColor }}
+        style={{ backgroundColor: theme.background }}
       >
         {messages.map((message, index) => (
           <div
@@ -164,13 +168,11 @@ export function ChatPreview({
               } max-w-xs`}
               style={{
                 backgroundColor:
-                  message.type === "incoming"
-                    ? config.incomingMessageBackgroundColor
-                    : config.senderMessageBackgroundColor,
+                  message.type === "incoming" ? theme.card : theme.primary,
                 color:
                   message.type === "incoming"
-                    ? config.incomingMessageTextColor || "#374151"
-                    : config.senderMessageTextColor || "#ffffff",
+                    ? theme["card-foreground"]
+                    : "#ffffff",
               }}
             >
               <p>{message.content}</p>
@@ -182,27 +184,30 @@ export function ChatPreview({
       {/* Chat Input */}
       {showInput && (
         <div
-          className={`${sizes.input} border-t border-gray-200 dark:border-gray-700`}
-          style={{ backgroundColor: config.chatBackgroundColor }}
+          className={`${sizes.input}`}
+          style={{
+            backgroundColor: theme.background,
+            borderTop: `1px solid ${theme.border}`,
+          }}
         >
           <div className="flex gap-2">
             <div
               className={`flex-1 ${sizes.inputField} rounded-full items-center flex py-1 px-3 text-sm`}
               style={{
-                backgroundColor: config.inputBackgroundColor || "#f3f4f6",
-                color: config.inputTextColor || "#374151",
+                backgroundColor: theme.card,
+                color: theme["card-foreground"],
               }}
             >
               Type your message
             </div>
             <button
               className={`${sizes.sendButton} rounded-full flex items-center justify-center`}
-              style={{ backgroundColor: config.sendButtonBackgroundColor }}
+              style={{ backgroundColor: theme.accent }}
             >
               <PaperPlaneTilt
                 size={sizes.sendIcon}
                 weight="fill"
-                style={{ color: config.sendButtonTextColor || "#ffffff" }}
+                style={{ color: "#ffffff" }}
               />
             </button>
           </div>

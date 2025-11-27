@@ -12,7 +12,7 @@ import {
   SignOut,
   Wrench,
   X,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getContrastTextColor, getGradientDiagonal } from "../config/theme";

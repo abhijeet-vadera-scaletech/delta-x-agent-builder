@@ -8,7 +8,7 @@ import {
   Plus,
   Robot,
   Trash,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import Select from "react-select";
@@ -71,23 +71,35 @@ export default function Personalization() {
   const [formData, setFormData] = useState<PersonalizationConfig>({
     name: "",
     agentAvatar: "",
-    headerGradientStart: "#000000",
-    headerGradientEnd: "#3d3d3d",
-    senderMessageBackgroundColor: "#000000",
-    incomingMessageBackgroundColor: "#e3e3e3",
-    sendButtonBackgroundColor: "#000000",
-    chatBackgroundColor: "#ffffff",
-    inputBackgroundColor: "#000000",
-    inputTextColor: "#ffffff",
-    incomingMessageTextColor: "#000000",
-    senderMessageTextColor: "#ffffff",
-    sendButtonTextColor: "#ffffff",
+    enableBorder: true,
+    borderWidth: "1px",
+    borderStyle: "solid",
+    themeMode: "system",
+    light: {
+      primary: "#667eea",
+      background: "#ffffff",
+      accent: "#667eea",
+      highlight: "#f3f4f6",
+      secondary: "#667eea",
+      foreground: "#1f2937",
+      border: "#e5e7eb",
+      card: "#f9fafb",
+      "card-foreground": "#1f2937",
+      destructive: "#ef4444",
+    },
+    dark: {
+      primary: "#667eea",
+      background: "#1a1a1a",
+      accent: "#667eea",
+      highlight: "#374151",
+      secondary: "#667eea",
+      foreground: "#ffffff",
+      border: "#374151",
+      card: "#2d2d2d",
+      "card-foreground": "#ffffff",
+      destructive: "#ef4444",
+    },
   });
-
-  // State for header background type (solid or gradient)
-  const [headerBackgroundType, setHeaderBackgroundType] = useState<
-    "solid" | "gradient"
-  >("gradient");
 
   // State for selected agents
   const [selectedAgents, setSelectedAgents] = useState<
@@ -101,19 +113,35 @@ export default function Personalization() {
     setFormData({
       name: "",
       agentAvatar: "",
-      headerGradientStart: "#000000",
-      headerGradientEnd: "#3d3d3d",
-      senderMessageBackgroundColor: "#000000",
-      incomingMessageBackgroundColor: "#e3e3e3",
-      sendButtonBackgroundColor: "#000000",
-      chatBackgroundColor: "#ffffff",
-      inputBackgroundColor: "#000000",
-      inputTextColor: "#ffffff",
-      incomingMessageTextColor: "#000000",
-      senderMessageTextColor: "#ffffff",
-      sendButtonTextColor: "#ffffff",
+      enableBorder: true,
+      borderWidth: "1px",
+      borderStyle: "solid",
+      themeMode: "system",
+      light: {
+        primary: "#667eea",
+        background: "#ffffff",
+        accent: "#667eea",
+        highlight: "#f3f4f6",
+        secondary: "#667eea",
+        foreground: "#1f2937",
+        border: "#e5e7eb",
+        card: "#f9fafb",
+        "card-foreground": "#1f2937",
+        destructive: "#ef4444",
+      },
+      dark: {
+        primary: "#667eea",
+        background: "#1a1a1a",
+        accent: "#667eea",
+        highlight: "#374151",
+        secondary: "#667eea",
+        foreground: "#ffffff",
+        border: "#374151",
+        card: "#2d2d2d",
+        "card-foreground": "#ffffff",
+        destructive: "#ef4444",
+      },
     });
-    setHeaderBackgroundType("gradient");
     setSelectedAgents([]);
     setPendingImageFile(null);
     setEditingPersonalization(null);
@@ -128,29 +156,35 @@ export default function Personalization() {
     setFormData({
       name: personalization.name,
       agentAvatar: personalization.agentAvatar || "",
-      headerGradientStart: personalization.headerGradientStart,
-      headerGradientEnd: personalization.headerGradientEnd,
-      senderMessageBackgroundColor:
-        personalization.senderMessageBackgroundColor || "#2563eb",
-      incomingMessageBackgroundColor:
-        personalization.incomingMessageBackgroundColor || "#f1f4f6",
-      sendButtonBackgroundColor:
-        personalization.sendButtonBackgroundColor || "#2563eb",
-      chatBackgroundColor: personalization.chatBackgroundColor,
-      inputBackgroundColor: personalization.inputBackgroundColor || "#ffffff",
-      inputTextColor: personalization.inputTextColor || "#000000",
-      incomingMessageTextColor:
-        personalization.incomingMessageTextColor || "#000000",
-      senderMessageTextColor:
-        personalization.senderMessageTextColor || "#ffffff",
-      sendButtonTextColor: personalization.sendButtonTextColor || "#ffffff",
+      enableBorder: personalization.enableBorder ?? true,
+      borderWidth: personalization.borderWidth || "1px",
+      borderStyle: personalization.borderStyle || "solid",
+      themeMode: personalization.themeMode || "system",
+      light: personalization.light || {
+        primary: "#667eea",
+        background: "#ffffff",
+        accent: "#667eea",
+        highlight: "#f3f4f6",
+        secondary: "#667eea",
+        foreground: "#1f2937",
+        border: "#e5e7eb",
+        card: "#f9fafb",
+        "card-foreground": "#1f2937",
+        destructive: "#ef4444",
+      },
+      dark: personalization.dark || {
+        primary: "#667eea",
+        background: "#1a1a1a",
+        accent: "#667eea",
+        highlight: "#374151",
+        secondary: "#667eea",
+        foreground: "#ffffff",
+        border: "#374151",
+        card: "#2d2d2d",
+        "card-foreground": "#ffffff",
+        destructive: "#ef4444",
+      },
     });
-    // Determine if it's solid or gradient based on whether start and end colors are the same
-    setHeaderBackgroundType(
-      personalization.headerGradientStart === personalization.headerGradientEnd
-        ? "solid"
-        : "gradient"
-    );
 
     // Set selected agents from attached agents
     const attachedAgents = personalization.attachedAgents || [];
@@ -417,7 +451,7 @@ export default function Personalization() {
                     >
                       <PencilSimple
                         size={18}
-                        className="text-blue-600 dark:text-blue-400"
+                        className="text-primary dark:text-blue-400"
                       />
                     </motion.button>
                     <motion.button
@@ -438,22 +472,72 @@ export default function Personalization() {
                 {/* Preview */}
                 <div
                   className="cursor-pointer"
-                  onClick={() => openPreview(personalization)}
+                  onClick={() =>
+                    openPreview({
+                      ...personalization,
+                      agentAvatar: personalization.agentAvatar || "",
+                      enableBorder: personalization.enableBorder ?? true,
+                      borderWidth: personalization.borderWidth || "1px",
+                      borderStyle: personalization.borderStyle || "solid",
+                      themeMode: personalization.themeMode || "system",
+                      light: personalization.light || {
+                        primary: "#667eea",
+                        background: "#ffffff",
+                        accent: "#667eea",
+                        highlight: "#f3f4f6",
+                        secondary: "#667eea",
+                        foreground: "#1f2937",
+                        border: "#e5e7eb",
+                        card: "#f9fafb",
+                        "card-foreground": "#1f2937",
+                        destructive: "#ef4444",
+                      },
+                      dark: personalization.dark || {
+                        primary: "#667eea",
+                        background: "#1a1a1a",
+                        accent: "#667eea",
+                        highlight: "#374151",
+                        secondary: "#667eea",
+                        foreground: "#ffffff",
+                        border: "#374151",
+                        card: "#2d2d2d",
+                        "card-foreground": "#ffffff",
+                        destructive: "#ef4444",
+                      },
+                    })
+                  }
                 >
                   <ChatPreview
                     config={{
-                      headerGradientStart: personalization.headerGradientStart,
-                      headerGradientEnd: personalization.headerGradientEnd,
-                      chatBackgroundColor: personalization.chatBackgroundColor,
-                      senderMessageBackgroundColor:
-                        personalization.senderMessageBackgroundColor ||
-                        "#2563eb",
-                      incomingMessageBackgroundColor:
-                        personalization.incomingMessageBackgroundColor ||
-                        "#f1f4f6",
-                      sendButtonBackgroundColor:
-                        personalization.sendButtonBackgroundColor || "#2563eb",
-                      agentAvatar: personalization.agentAvatar,
+                      agentAvatar: personalization.agentAvatar || "",
+                      enableBorder: personalization.enableBorder ?? true,
+                      borderWidth: personalization.borderWidth || "1px",
+                      borderStyle: personalization.borderStyle || "solid",
+                      themeMode: personalization.themeMode || "system",
+                      light: personalization.light || {
+                        primary: "#667eea",
+                        background: "#ffffff",
+                        accent: "#667eea",
+                        highlight: "#f3f4f6",
+                        secondary: "#667eea",
+                        foreground: "#1f2937",
+                        border: "#e5e7eb",
+                        card: "#f9fafb",
+                        "card-foreground": "#1f2937",
+                        destructive: "#ef4444",
+                      },
+                      dark: personalization.dark || {
+                        primary: "#667eea",
+                        background: "#1a1a1a",
+                        accent: "#667eea",
+                        highlight: "#374151",
+                        secondary: "#667eea",
+                        foreground: "#ffffff",
+                        border: "#374151",
+                        card: "#2d2d2d",
+                        "card-foreground": "#ffffff",
+                        destructive: "#ef4444",
+                      },
                     }}
                     size="small"
                     messages={[
@@ -494,7 +578,7 @@ export default function Personalization() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   placeholder="Enter personalization name"
                 />
               </div>
@@ -594,7 +678,7 @@ export default function Personalization() {
                           agentAvatar: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       placeholder="Or enter avatar image URL"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -604,190 +688,286 @@ export default function Personalization() {
                 </div>
               </div>
 
-              {/* Header Background Type */}
+              {/* Border Options */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Header Background Type
-                </label>
-                <div className="flex gap-4 mb-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                  Border Options
+                </h4>
+                <div className="flex items-center gap-2 mb-4">
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
-                      type="radio"
-                      name="headerType"
-                      value="solid"
-                      checked={headerBackgroundType === "solid"}
-                      onChange={() => {
-                        setHeaderBackgroundType("solid");
-                        // Set both gradient colors to the same value for solid color
+                      type="checkbox"
+                      checked={formData.enableBorder}
+                      onChange={(e) =>
                         setFormData({
                           ...formData,
-                          headerGradientEnd: formData.headerGradientStart,
-                        });
-                      }}
-                      className="text-blue-600"
+                          enableBorder: e.target.checked,
+                        })
+                      }
+                      className="sr-only peer"
                     />
-                    <span className="text-gray-900 dark:text-white">
-                      Solid Color
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="headerType"
-                      value="gradient"
-                      checked={headerBackgroundType === "gradient"}
-                      onChange={() => setHeaderBackgroundType("gradient")}
-                      className="text-blue-600"
-                    />
-                    <span className="text-gray-900 dark:text-white">
-                      Gradient
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-white">
+                      Enable Border
                     </span>
                   </label>
                 </div>
-              </div>
-
-              {/* Header Colors */}
-              <div className="grid grid-cols-2 gap-4">
-                <ColorPicker
-                  label={
-                    headerBackgroundType === "solid"
-                      ? "Header Color"
-                      : "Start Color"
-                  }
-                  value={formData.headerGradientStart}
-                  onChange={(newColor) => {
-                    setFormData({
-                      ...formData,
-                      headerGradientStart: newColor,
-                      // If solid color, set end color to same value
-                      headerGradientEnd:
-                        headerBackgroundType === "solid"
-                          ? newColor
-                          : formData.headerGradientEnd,
-                    });
-                  }}
-                />
-                {headerBackgroundType === "gradient" && (
-                  <ColorPicker
-                    label="End Color"
-                    value={formData.headerGradientEnd}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        headerGradientEnd: newColor,
-                      })
-                    }
-                  />
+                {formData.enableBorder && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        Border Width
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.borderWidth}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            borderWidth: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., 1px, 2px, 0.5em"
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        e.g., 1px, 2px, 0.5em
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        Border Style
+                      </label>
+                      <select
+                        value={formData.borderStyle}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            borderStyle: e.target.value as
+                              | "solid"
+                              | "dashed"
+                              | "dotted",
+                          })
+                        }
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="solid">Solid</option>
+                        <option value="dashed">Dashed</option>
+                        <option value="dotted">Dotted</option>
+                      </select>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Background Colors */}
+              {/* Theme Mode and Reset Button */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                  Background Colors
+                  Theme Mode
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <ColorPicker
-                    label="Chat Background Color"
-                    value={formData.chatBackgroundColor}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        chatBackgroundColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Input Background"
-                    value={formData.inputBackgroundColor || "#ffffff"}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        inputBackgroundColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Sender Message Background"
-                    value={formData.senderMessageBackgroundColor}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        senderMessageBackgroundColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Incoming Message Background"
-                    value={formData.incomingMessageBackgroundColor}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        incomingMessageBackgroundColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Send Button Background"
-                    value={formData.sendButtonBackgroundColor}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        sendButtonBackgroundColor: newColor,
-                      })
-                    }
-                  />
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2">
+                    <select
+                      value={formData.themeMode}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          themeMode: e.target.value as
+                            | "system"
+                            | "light"
+                            | "dark",
+                        })
+                      }
+                      className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    >
+                      <option value="system">System Preference</option>
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          light: {
+                            primary: "#667eea",
+                            background: "#ffffff",
+                            accent: "#667eea",
+                            highlight: "#f3f4f6",
+                            secondary: "#667eea",
+                            foreground: "#1f2937",
+                            border: "#e5e7eb",
+                            card: "#f9fafb",
+                            "card-foreground": "#1f2937",
+                            destructive: "#ef4444",
+                          },
+                          dark: {
+                            primary: "#667eea",
+                            background: "#1a1a1a",
+                            accent: "#667eea",
+                            highlight: "#374151",
+                            secondary: "#667eea",
+                            foreground: "#ffffff",
+                            border: "#374151",
+                            card: "#2d2d2d",
+                            "card-foreground": "#ffffff",
+                            destructive: "#ef4444",
+                          },
+                        });
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Reset All Colors
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Text Colors */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                  Text Colors
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <ColorPicker
-                    label="Input Text Color"
-                    value={formData.inputTextColor || "#000000"}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        inputTextColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Sender Message Text"
-                    value={formData.senderMessageTextColor || "#ffffff"}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        senderMessageTextColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Incoming Message Text"
-                    value={formData.incomingMessageTextColor || "#000000"}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        incomingMessageTextColor: newColor,
-                      })
-                    }
-                  />
-                  <ColorPicker
-                    label="Send Button Text"
-                    value={formData.sendButtonTextColor || "#ffffff"}
-                    onChange={(newColor) =>
-                      setFormData({
-                        ...formData,
-                        sendButtonTextColor: newColor,
-                      })
-                    }
-                  />
+              {/* Light Theme Colors */}
+              {(formData.themeMode === "system" ||
+                formData.themeMode === "light") && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                    Light Theme Colors
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <ColorPicker
+                      label="Primary Color"
+                      value={formData.light.primary}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, primary: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Background Color"
+                      value={formData.light.background}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, background: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Foreground Color"
+                      value={formData.light.foreground}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, foreground: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Accent Color"
+                      value={formData.light.accent}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, accent: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Border Color"
+                      value={formData.light.border}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, border: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Card Color"
+                      value={formData.light.card}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: { ...formData.light, card: newColor },
+                        })
+                      }
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Dark Theme Colors */}
+              {(formData.themeMode === "system" ||
+                formData.themeMode === "dark") && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+                    Dark Theme Colors
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <ColorPicker
+                      label="Primary Color"
+                      value={formData.dark.primary}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, primary: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Background Color"
+                      value={formData.dark.background}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, background: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Foreground Color"
+                      value={formData.dark.foreground}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, foreground: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Accent Color"
+                      value={formData.dark.accent}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, accent: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Border Color"
+                      value={formData.dark.border}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, border: newColor },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Card Color"
+                      value={formData.dark.card}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: { ...formData.dark, card: newColor },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -799,19 +979,12 @@ export default function Personalization() {
             <ChatPreview
               config={{
                 agentAvatar: formData.agentAvatar || "",
-                headerGradientStart: formData.headerGradientStart,
-                headerGradientEnd: formData.headerGradientEnd,
-                chatBackgroundColor: formData.chatBackgroundColor,
-                senderMessageBackgroundColor:
-                  formData.senderMessageBackgroundColor,
-                incomingMessageBackgroundColor:
-                  formData.incomingMessageBackgroundColor,
-                sendButtonBackgroundColor: formData.sendButtonBackgroundColor,
-                senderMessageTextColor: formData.senderMessageTextColor,
-                incomingMessageTextColor: formData.incomingMessageTextColor,
-                sendButtonTextColor: formData.sendButtonTextColor,
-                inputBackgroundColor: formData.inputBackgroundColor,
-                inputTextColor: formData.inputTextColor,
+                enableBorder: formData.enableBorder,
+                borderWidth: formData.borderWidth,
+                borderStyle: formData.borderStyle,
+                themeMode: formData.themeMode,
+                light: formData.light,
+                dark: formData.dark,
               }}
               size="large"
               messages={[

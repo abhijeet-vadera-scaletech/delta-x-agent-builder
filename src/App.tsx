@@ -9,7 +9,7 @@ import {
   Rocket,
   Sliders,
   User as UserIcon,
-} from "phosphor-react";
+} from "@phosphor-icons/react";
 import {
   Navigate,
   Route,
@@ -30,9 +30,9 @@ import KnowledgeBase from "./pages/KnowledgeBase";
 import Personalization from "./pages/Personalization";
 import Profile from "./pages/Profile";
 import PublicAgentView from "./pages/PublicAgentViewNew";
-import Services from "./pages/ServicesNew";
+import Services from "./pages/Services";
 import Settings from "./pages/Settings";
-import TestDeploy from "./pages/TestDeploynew";
+import TestDeploy from "./pages/TestDeploy";
 
 function AppContent() {
   return (
@@ -43,6 +43,10 @@ function AppContent() {
           <Route path="/auth" element={<Auth />} />
           <Route
             path="/agent/:agentId"
+            element={<PublicAgentView isTesting={false} />}
+          />
+          <Route
+            path="/agent/test/:agentId"
             element={<PublicAgentView isTesting={true} />}
           />
         </Route>

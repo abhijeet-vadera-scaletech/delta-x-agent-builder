@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Icon } from "phosphor-react";
+import { Icon } from "@phosphor-icons/react";
 
 export type AnimationType =
   | "shake"

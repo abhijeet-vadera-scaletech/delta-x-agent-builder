@@ -563,7 +563,7 @@ export default function PublicAgentViewNew({
       )}
 
       {/* Sidebar */}
-      {!isAuthRequired && (
+      {!isAuthRequired && !isTesting && (
         <AnimatePresence>
           {sidebarOpen && (
             <>
@@ -937,12 +937,7 @@ export default function PublicAgentViewNew({
 
       {/* Main Content */}
       {!isAuthRequired && (
-        <div
-          className="flex-1 flex flex-col h-dvh w-full"
-          style={{
-            border: chatBorder,
-          }}
-        >
+        <div className="flex-1 flex flex-col h-dvh w-full">
           {/* Top Header */}
           <div
             className="h-14 flex items-center justify-between px-2 sm:px-4"
@@ -953,31 +948,33 @@ export default function PublicAgentViewNew({
           >
             {/* Left: Sidebar Toggle + Agent Name */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-1.5 sm:p-2 rounded-lg transition-colors focus:outline-none"
-                style={{ backgroundColor: "transparent" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = isDark
-                    ? "#374151"
-                    : "#e5e7eb")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
-              >
-                {sidebarOpen ? (
-                  <CaretLeftIcon
-                    size={20}
-                    style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                  />
-                ) : (
-                  <ListIcon
-                    size={20}
-                    style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                  />
-                )}
-              </button>
+              {!isTesting && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-1.5 sm:p-2 rounded-lg transition-colors focus:outline-none"
+                  style={{ backgroundColor: "transparent" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = isDark
+                      ? "#374151"
+                      : "#e5e7eb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  {sidebarOpen ? (
+                    <CaretLeftIcon
+                      size={20}
+                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                    />
+                  ) : (
+                    <ListIcon
+                      size={20}
+                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                    />
+                  )}
+                </button>
+              )}
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   {agentAvatar ? (
@@ -1020,18 +1017,18 @@ export default function PublicAgentViewNew({
 
             {/* Right: Temporary Badge + Theme Toggle + User Profile */}
             <div className="flex items-center gap-3">
-              {/* {user?.isAnonymous && (
-              <span
-                className="text-xs px-3 py-1.5 rounded-full"
-                style={{
-                  backgroundColor: isDark ? "#374151" : "#e5e7eb",
-                  color: isDark ? "#d1d5db" : "#6b7280",
-                  border: `1px solid ${borderColor}`,
-                }}
-              >
-                Temporary
-              </span>
-            )} */}
+              {isTesting && (
+                <span
+                  className="text-xs px-3 py-1.5 rounded-full"
+                  style={{
+                    backgroundColor: isDark ? "#374151" : "#e5e7eb",
+                    color: isDark ? "#d1d5db" : "#6b7280",
+                    border: `1px solid ${borderColor}`,
+                  }}
+                >
+                  Temporary
+                </span>
+              )}
               {/* Theme Toggle - Only show if themeMode is 'system' */}
               {showThemeToggle && (
                 <button

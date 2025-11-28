@@ -18,7 +18,7 @@ import { GlassButton } from "../components/GlassButton";
 import { GlassCard } from "../components/GlassCard";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
-import { ChatPreview, ColorPicker } from "../components/ui";
+import { ChatPreview, ColorPicker, ToggleSwitch } from "../components/ui";
 import { getGradient } from "../config/theme";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -703,24 +703,18 @@ export default function Personalization() {
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
                   Border Options
                 </h4>
-                <div className="flex items-center gap-2 mb-4">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.enableBorder}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          enableBorder: e.target.checked,
-                        })
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-white">
-                      Enable Border
-                    </span>
-                  </label>
+                <div className="mb-4">
+                  <ToggleSwitch
+                    enabled={formData.enableBorder}
+                    onChange={(enabled) =>
+                      setFormData({
+                        ...formData,
+                        enableBorder: enabled,
+                      })
+                    }
+                    label="Enable Border"
+                    color="primary"
+                  />
                 </div>
                 {formData.enableBorder && (
                   <div className="grid grid-cols-2 gap-4">

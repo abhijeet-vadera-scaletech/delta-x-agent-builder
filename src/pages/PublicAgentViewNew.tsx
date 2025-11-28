@@ -499,14 +499,8 @@ export default function PublicAgentViewNew({
   const sidebarBg = isDark ? "#1e1e1e" : "#f9fafb";
 
   // Border configuration
-  const enableBorder = personalization?.enableBorder || false;
   const borderWidth = personalization?.borderWidth || "1px";
   const borderStyle = personalization?.borderStyle || "solid";
-
-  // Border for outer container (can be disabled)
-  const chatBorder = enableBorder
-    ? `${borderWidth} ${borderStyle} ${borderColor}`
-    : "none";
 
   // Border for internal dividers (always visible, uses same width/style)
   const dividerBorder = `${borderWidth} ${borderStyle} ${borderColor}`;

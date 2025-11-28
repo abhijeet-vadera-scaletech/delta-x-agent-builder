@@ -236,16 +236,17 @@ export interface Personalization extends PersonalizationConfig {
 }
 
 export interface ThemeColors {
-  primary: string;
-  background: string;
-  accent: string;
-  highlight?: string;
-  secondary: string;
-  foreground: string;
-  border: string;
-  card: string;
-  "card-foreground": string;
-  destructive: string;
+  inputTextColor: string;
+  headerGradientEnd: string;
+  chatBackgroundColor: string;
+  headerGradientStart: string;
+  sendButtonTextColor: string;
+  inputBackgroundColor: string;
+  senderMessageTextColor: string;
+  incomingMessageTextColor: string;
+  sendButtonBackgroundColor: string;
+  senderMessageBackgroundColor: string;
+  incomingMessageBackgroundColor: string;
 }
 
 export interface PersonalizationConfig {
@@ -253,8 +254,8 @@ export interface PersonalizationConfig {
   agentAvatar?: string;
   // Border options
   enableBorder: boolean;
-  borderWidth: string; // e.g., "1px", "2px", "0.5em"
-  borderStyle: "solid" | "dashed" | "dotted";
+  borderWidth: string | null; // e.g., "1px", "2px", "0.5em"
+  borderStyle: "solid" | "dashed" | "dotted" | null;
   // Theme mode preference
   themeMode: "system" | "light" | "dark";
   // Theme colors
@@ -266,8 +267,8 @@ export interface CreatePersonalizationRequest {
   name: string;
   agentAvatar?: string;
   enableBorder: boolean;
-  borderWidth: string;
-  borderStyle: "solid" | "dashed" | "dotted";
+  borderWidth: string | null;
+  borderStyle: "solid" | "dashed" | "dotted" | null;
   themeMode: "system" | "light" | "dark";
   light: ThemeColors;
   dark: ThemeColors;
@@ -278,8 +279,8 @@ export interface UpdatePersonalizationRequest {
   name?: string;
   agentAvatar?: string;
   enableBorder?: boolean;
-  borderWidth?: string;
-  borderStyle?: "solid" | "dashed" | "dotted";
+  borderWidth?: string | null;
+  borderStyle?: "solid" | "dashed" | "dotted" | null;
   themeMode?: "system" | "light" | "dark";
   light?: ThemeColors;
   dark?: ThemeColors;

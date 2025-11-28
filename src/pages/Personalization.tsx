@@ -74,30 +74,32 @@ export default function Personalization() {
     enableBorder: true,
     borderWidth: "1px",
     borderStyle: "solid",
-    themeMode: "system",
+    themeMode: "light",
     light: {
-      primary: "#667eea",
-      background: "#ffffff",
-      accent: "#667eea",
-      highlight: "#f3f4f6",
-      secondary: "#667eea",
-      foreground: "#1f2937",
-      border: "#e5e7eb",
-      card: "#f9fafb",
-      "card-foreground": "#1f2937",
-      destructive: "#ef4444",
+      inputTextColor: "#ffffff",
+      headerGradientEnd: "#3d3d3d",
+      chatBackgroundColor: "#ffffff",
+      headerGradientStart: "#000000",
+      sendButtonTextColor: "#ffffff",
+      inputBackgroundColor: "#000000",
+      senderMessageTextColor: "#ffffff",
+      incomingMessageTextColor: "#000000",
+      sendButtonBackgroundColor: "#000000",
+      senderMessageBackgroundColor: "#000000",
+      incomingMessageBackgroundColor: "#e3e3e3",
     },
     dark: {
-      primary: "#667eea",
-      background: "#1a1a1a",
-      accent: "#667eea",
-      highlight: "#374151",
-      secondary: "#667eea",
-      foreground: "#ffffff",
-      border: "#374151",
-      card: "#2d2d2d",
-      "card-foreground": "#ffffff",
-      destructive: "#ef4444",
+      inputTextColor: "#ffffff",
+      headerGradientEnd: "#3d3d3d",
+      chatBackgroundColor: "#ffffff",
+      headerGradientStart: "#000000",
+      sendButtonTextColor: "#ffffff",
+      inputBackgroundColor: "#000000",
+      senderMessageTextColor: "#ffffff",
+      incomingMessageTextColor: "#000000",
+      sendButtonBackgroundColor: "#000000",
+      senderMessageBackgroundColor: "#000000",
+      incomingMessageBackgroundColor: "#e3e3e3",
     },
   });
 
@@ -116,30 +118,32 @@ export default function Personalization() {
       enableBorder: true,
       borderWidth: "1px",
       borderStyle: "solid",
-      themeMode: "system",
+      themeMode: "light",
       light: {
-        primary: "#667eea",
-        background: "#ffffff",
-        accent: "#667eea",
-        highlight: "#f3f4f6",
-        secondary: "#667eea",
-        foreground: "#1f2937",
-        border: "#e5e7eb",
-        card: "#f9fafb",
-        "card-foreground": "#1f2937",
-        destructive: "#ef4444",
+        inputTextColor: "#ffffff",
+        headerGradientEnd: "#3d3d3d",
+        chatBackgroundColor: "#ffffff",
+        headerGradientStart: "#000000",
+        sendButtonTextColor: "#ffffff",
+        inputBackgroundColor: "#000000",
+        senderMessageTextColor: "#ffffff",
+        incomingMessageTextColor: "#000000",
+        sendButtonBackgroundColor: "#000000",
+        senderMessageBackgroundColor: "#000000",
+        incomingMessageBackgroundColor: "#e3e3e3",
       },
       dark: {
-        primary: "#667eea",
-        background: "#1a1a1a",
-        accent: "#667eea",
-        highlight: "#374151",
-        secondary: "#667eea",
-        foreground: "#ffffff",
-        border: "#374151",
-        card: "#2d2d2d",
-        "card-foreground": "#ffffff",
-        destructive: "#ef4444",
+        inputTextColor: "#ffffff",
+        headerGradientEnd: "#3d3d3d",
+        chatBackgroundColor: "#ffffff",
+        headerGradientStart: "#000000",
+        sendButtonTextColor: "#ffffff",
+        inputBackgroundColor: "#000000",
+        senderMessageTextColor: "#ffffff",
+        incomingMessageTextColor: "#000000",
+        sendButtonBackgroundColor: "#000000",
+        senderMessageBackgroundColor: "#000000",
+        incomingMessageBackgroundColor: "#e3e3e3",
       },
     });
     setSelectedAgents([]);
@@ -159,30 +163,32 @@ export default function Personalization() {
       enableBorder: personalization.enableBorder ?? true,
       borderWidth: personalization.borderWidth || "1px",
       borderStyle: personalization.borderStyle || "solid",
-      themeMode: personalization.themeMode || "system",
+      themeMode: personalization.themeMode || "light",
       light: personalization.light || {
-        primary: "#667eea",
-        background: "#ffffff",
-        accent: "#667eea",
-        highlight: "#f3f4f6",
-        secondary: "#667eea",
-        foreground: "#1f2937",
-        border: "#e5e7eb",
-        card: "#f9fafb",
-        "card-foreground": "#1f2937",
-        destructive: "#ef4444",
+        inputTextColor: "#ffffff",
+        headerGradientEnd: "#3d3d3d",
+        chatBackgroundColor: "#ffffff",
+        headerGradientStart: "#000000",
+        sendButtonTextColor: "#ffffff",
+        inputBackgroundColor: "#000000",
+        senderMessageTextColor: "#ffffff",
+        incomingMessageTextColor: "#000000",
+        sendButtonBackgroundColor: "#000000",
+        senderMessageBackgroundColor: "#000000",
+        incomingMessageBackgroundColor: "#e3e3e3",
       },
       dark: personalization.dark || {
-        primary: "#667eea",
-        background: "#1a1a1a",
-        accent: "#667eea",
-        highlight: "#374151",
-        secondary: "#667eea",
-        foreground: "#ffffff",
-        border: "#374151",
-        card: "#2d2d2d",
-        "card-foreground": "#ffffff",
-        destructive: "#ef4444",
+        inputTextColor: "#ffffff",
+        headerGradientEnd: "#3d3d3d",
+        chatBackgroundColor: "#ffffff",
+        headerGradientStart: "#000000",
+        sendButtonTextColor: "#ffffff",
+        inputBackgroundColor: "#000000",
+        senderMessageTextColor: "#ffffff",
+        incomingMessageTextColor: "#000000",
+        sendButtonBackgroundColor: "#000000",
+        senderMessageBackgroundColor: "#000000",
+        incomingMessageBackgroundColor: "#e3e3e3",
       },
     });
 
@@ -479,30 +485,32 @@ export default function Personalization() {
                       enableBorder: personalization.enableBorder ?? true,
                       borderWidth: personalization.borderWidth || "1px",
                       borderStyle: personalization.borderStyle || "solid",
-                      themeMode: personalization.themeMode || "system",
+                      themeMode: personalization.themeMode || "light",
                       light: personalization.light || {
-                        primary: "#667eea",
-                        background: "#ffffff",
-                        accent: "#667eea",
-                        highlight: "#f3f4f6",
-                        secondary: "#667eea",
-                        foreground: "#1f2937",
-                        border: "#e5e7eb",
-                        card: "#f9fafb",
-                        "card-foreground": "#1f2937",
-                        destructive: "#ef4444",
+                        inputTextColor: "#ffffff",
+                        headerGradientEnd: "#3d3d3d",
+                        chatBackgroundColor: "#ffffff",
+                        headerGradientStart: "#000000",
+                        sendButtonTextColor: "#ffffff",
+                        inputBackgroundColor: "#000000",
+                        senderMessageTextColor: "#ffffff",
+                        incomingMessageTextColor: "#000000",
+                        sendButtonBackgroundColor: "#000000",
+                        senderMessageBackgroundColor: "#000000",
+                        incomingMessageBackgroundColor: "#e3e3e3",
                       },
                       dark: personalization.dark || {
-                        primary: "#667eea",
-                        background: "#1a1a1a",
-                        accent: "#667eea",
-                        highlight: "#374151",
-                        secondary: "#667eea",
-                        foreground: "#ffffff",
-                        border: "#374151",
-                        card: "#2d2d2d",
-                        "card-foreground": "#ffffff",
-                        destructive: "#ef4444",
+                        inputTextColor: "#ffffff",
+                        headerGradientEnd: "#3d3d3d",
+                        chatBackgroundColor: "#ffffff",
+                        headerGradientStart: "#000000",
+                        sendButtonTextColor: "#ffffff",
+                        inputBackgroundColor: "#000000",
+                        senderMessageTextColor: "#ffffff",
+                        incomingMessageTextColor: "#000000",
+                        sendButtonBackgroundColor: "#000000",
+                        senderMessageBackgroundColor: "#000000",
+                        incomingMessageBackgroundColor: "#e3e3e3",
                       },
                     })
                   }
@@ -513,30 +521,32 @@ export default function Personalization() {
                       enableBorder: personalization.enableBorder ?? true,
                       borderWidth: personalization.borderWidth || "1px",
                       borderStyle: personalization.borderStyle || "solid",
-                      themeMode: personalization.themeMode || "system",
+                      themeMode: personalization.themeMode || "light",
                       light: personalization.light || {
-                        primary: "#667eea",
-                        background: "#ffffff",
-                        accent: "#667eea",
-                        highlight: "#f3f4f6",
-                        secondary: "#667eea",
-                        foreground: "#1f2937",
-                        border: "#e5e7eb",
-                        card: "#f9fafb",
-                        "card-foreground": "#1f2937",
-                        destructive: "#ef4444",
+                        inputTextColor: "#ffffff",
+                        headerGradientEnd: "#3d3d3d",
+                        chatBackgroundColor: "#ffffff",
+                        headerGradientStart: "#000000",
+                        sendButtonTextColor: "#ffffff",
+                        inputBackgroundColor: "#000000",
+                        senderMessageTextColor: "#ffffff",
+                        incomingMessageTextColor: "#000000",
+                        sendButtonBackgroundColor: "#000000",
+                        senderMessageBackgroundColor: "#000000",
+                        incomingMessageBackgroundColor: "#e3e3e3",
                       },
                       dark: personalization.dark || {
-                        primary: "#667eea",
-                        background: "#1a1a1a",
-                        accent: "#667eea",
-                        highlight: "#374151",
-                        secondary: "#667eea",
-                        foreground: "#ffffff",
-                        border: "#374151",
-                        card: "#2d2d2d",
-                        "card-foreground": "#ffffff",
-                        destructive: "#ef4444",
+                        inputTextColor: "#ffffff",
+                        headerGradientEnd: "#3d3d3d",
+                        chatBackgroundColor: "#ffffff",
+                        headerGradientStart: "#000000",
+                        sendButtonTextColor: "#ffffff",
+                        inputBackgroundColor: "#000000",
+                        senderMessageTextColor: "#ffffff",
+                        incomingMessageTextColor: "#000000",
+                        sendButtonBackgroundColor: "#000000",
+                        senderMessageBackgroundColor: "#000000",
+                        incomingMessageBackgroundColor: "#e3e3e3",
                       },
                     }}
                     size="small"
@@ -720,11 +730,11 @@ export default function Personalization() {
                       </label>
                       <input
                         type="text"
-                        value={formData.borderWidth}
+                        value={formData.borderWidth || ""}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            borderWidth: e.target.value,
+                            borderWidth: e.target.value || null,
                           })
                         }
                         placeholder="e.g., 1px, 2px, 0.5em"
@@ -739,14 +749,15 @@ export default function Personalization() {
                         Border Style
                       </label>
                       <select
-                        value={formData.borderStyle}
+                        value={formData.borderStyle || "solid"}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            borderStyle: e.target.value as
-                              | "solid"
-                              | "dashed"
-                              | "dotted",
+                            borderStyle:
+                              (e.target.value as
+                                | "solid"
+                                | "dashed"
+                                | "dotted") || null,
                           })
                         }
                         className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -792,28 +803,30 @@ export default function Personalization() {
                         setFormData({
                           ...formData,
                           light: {
-                            primary: "#667eea",
-                            background: "#ffffff",
-                            accent: "#667eea",
-                            highlight: "#f3f4f6",
-                            secondary: "#667eea",
-                            foreground: "#1f2937",
-                            border: "#e5e7eb",
-                            card: "#f9fafb",
-                            "card-foreground": "#1f2937",
-                            destructive: "#ef4444",
+                            inputTextColor: "#ffffff",
+                            headerGradientEnd: "#3d3d3d",
+                            chatBackgroundColor: "#ffffff",
+                            headerGradientStart: "#000000",
+                            sendButtonTextColor: "#ffffff",
+                            inputBackgroundColor: "#000000",
+                            senderMessageTextColor: "#ffffff",
+                            incomingMessageTextColor: "#000000",
+                            sendButtonBackgroundColor: "#000000",
+                            senderMessageBackgroundColor: "#000000",
+                            incomingMessageBackgroundColor: "#e3e3e3",
                           },
                           dark: {
-                            primary: "#667eea",
-                            background: "#1a1a1a",
-                            accent: "#667eea",
-                            highlight: "#374151",
-                            secondary: "#667eea",
-                            foreground: "#ffffff",
-                            border: "#374151",
-                            card: "#2d2d2d",
-                            "card-foreground": "#ffffff",
-                            destructive: "#ef4444",
+                            inputTextColor: "#ffffff",
+                            headerGradientEnd: "#3d3d3d",
+                            chatBackgroundColor: "#ffffff",
+                            headerGradientStart: "#000000",
+                            sendButtonTextColor: "#ffffff",
+                            inputBackgroundColor: "#000000",
+                            senderMessageTextColor: "#ffffff",
+                            incomingMessageTextColor: "#000000",
+                            sendButtonBackgroundColor: "#000000",
+                            senderMessageBackgroundColor: "#000000",
+                            incomingMessageBackgroundColor: "#e3e3e3",
                           },
                         });
                       }}
@@ -834,62 +847,145 @@ export default function Personalization() {
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
                     <ColorPicker
-                      label="Primary Color"
-                      value={formData.light.primary}
+                      label="Input Text Color"
+                      value={formData.light.inputTextColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, primary: newColor },
+                          light: {
+                            ...formData.light,
+                            inputTextColor: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Background Color"
-                      value={formData.light.background}
+                      label="Header Gradient Start"
+                      value={formData.light.headerGradientStart}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, background: newColor },
+                          light: {
+                            ...formData.light,
+                            headerGradientStart: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Foreground Color"
-                      value={formData.light.foreground}
+                      label="Header Gradient End"
+                      value={formData.light.headerGradientEnd}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, foreground: newColor },
+                          light: {
+                            ...formData.light,
+                            headerGradientEnd: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Accent Color"
-                      value={formData.light.accent}
+                      label="Chat Background"
+                      value={formData.light.chatBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, accent: newColor },
+                          light: {
+                            ...formData.light,
+                            chatBackgroundColor: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Border Color"
-                      value={formData.light.border}
+                      label="Input Background"
+                      value={formData.light.inputBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, border: newColor },
+                          light: {
+                            ...formData.light,
+                            inputBackgroundColor: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Card Color"
-                      value={formData.light.card}
+                      label="Send Button Background"
+                      value={formData.light.sendButtonBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          light: { ...formData.light, card: newColor },
+                          light: {
+                            ...formData.light,
+                            sendButtonBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Send Button Text"
+                      value={formData.light.sendButtonTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: {
+                            ...formData.light,
+                            sendButtonTextColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Sender Message Background"
+                      value={formData.light.senderMessageBackgroundColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: {
+                            ...formData.light,
+                            senderMessageBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Sender Message Text"
+                      value={formData.light.senderMessageTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: {
+                            ...formData.light,
+                            senderMessageTextColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Incoming Message Background"
+                      value={formData.light.incomingMessageBackgroundColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: {
+                            ...formData.light,
+                            incomingMessageBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Incoming Message Text"
+                      value={formData.light.incomingMessageTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          light: {
+                            ...formData.light,
+                            incomingMessageTextColor: newColor,
+                          },
                         })
                       }
                     />
@@ -906,62 +1002,142 @@ export default function Personalization() {
                   </h4>
                   <div className="grid grid-cols-3 gap-4">
                     <ColorPicker
-                      label="Primary Color"
-                      value={formData.dark.primary}
+                      label="Input Text Color"
+                      value={formData.dark.inputTextColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, primary: newColor },
+                          dark: { ...formData.dark, inputTextColor: newColor },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Background Color"
-                      value={formData.dark.background}
+                      label="Header Gradient Start"
+                      value={formData.dark.headerGradientStart}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, background: newColor },
+                          dark: {
+                            ...formData.dark,
+                            headerGradientStart: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Foreground Color"
-                      value={formData.dark.foreground}
+                      label="Header Gradient End"
+                      value={formData.dark.headerGradientEnd}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, foreground: newColor },
+                          dark: {
+                            ...formData.dark,
+                            headerGradientEnd: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Accent Color"
-                      value={formData.dark.accent}
+                      label="Chat Background"
+                      value={formData.dark.chatBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, accent: newColor },
+                          dark: {
+                            ...formData.dark,
+                            chatBackgroundColor: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Border Color"
-                      value={formData.dark.border}
+                      label="Input Background"
+                      value={formData.dark.inputBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, border: newColor },
+                          dark: {
+                            ...formData.dark,
+                            inputBackgroundColor: newColor,
+                          },
                         })
                       }
                     />
                     <ColorPicker
-                      label="Card Color"
-                      value={formData.dark.card}
+                      label="Send Button Background"
+                      value={formData.dark.sendButtonBackgroundColor}
                       onChange={(newColor) =>
                         setFormData({
                           ...formData,
-                          dark: { ...formData.dark, card: newColor },
+                          dark: {
+                            ...formData.dark,
+                            sendButtonBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Send Button Text"
+                      value={formData.dark.sendButtonTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: {
+                            ...formData.dark,
+                            sendButtonTextColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Sender Message Background"
+                      value={formData.dark.senderMessageBackgroundColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: {
+                            ...formData.dark,
+                            senderMessageBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Sender Message Text"
+                      value={formData.dark.senderMessageTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: {
+                            ...formData.dark,
+                            senderMessageTextColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Incoming Message Background"
+                      value={formData.dark.incomingMessageBackgroundColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: {
+                            ...formData.dark,
+                            incomingMessageBackgroundColor: newColor,
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Incoming Message Text"
+                      value={formData.dark.incomingMessageTextColor}
+                      onChange={(newColor) =>
+                        setFormData({
+                          ...formData,
+                          dark: {
+                            ...formData.dark,
+                            incomingMessageTextColor: newColor,
+                          },
                         })
                       }
                     />
@@ -972,32 +1148,42 @@ export default function Personalization() {
           </div>
 
           {/* Right: Live Preview */}
-          <div className="w-1/2 p-6 border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Live Preview
-            </h3>
-            <ChatPreview
-              config={{
-                agentAvatar: formData.agentAvatar || "",
-                enableBorder: formData.enableBorder,
-                borderWidth: formData.borderWidth,
-                borderStyle: formData.borderStyle,
-                themeMode: formData.themeMode,
-                light: formData.light,
-                dark: formData.dark,
-              }}
-              size="large"
-              messages={[
-                {
-                  type: "incoming",
-                  content: "Hello! How can I help you today?",
-                },
-                {
-                  type: "outgoing",
-                  content: "I'd like to learn more about your services",
-                },
-              ]}
-            />
+          <div className="w-1/2 border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col">
+            <div className="p-6 pb-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Live Preview
+              </h3>
+            </div>
+            <div className="flex-1 px-6 pb-6">
+              <ChatPreview
+                config={{
+                  agentAvatar: formData.agentAvatar || "",
+                  enableBorder: formData.enableBorder,
+                  borderWidth: formData.borderWidth,
+                  borderStyle: formData.borderStyle,
+                  themeMode: formData.themeMode,
+                  light: formData.light,
+                  dark: formData.dark,
+                }}
+                fullScreen={true}
+                agentName={formData.name || "AI Assistant"}
+                messages={[
+                  {
+                    type: "incoming",
+                    content: "Hello! How can I help you today?",
+                  },
+                  {
+                    type: "outgoing",
+                    content: "I'd like to learn more about your services",
+                  },
+                  {
+                    type: "incoming",
+                    content:
+                      "I'd be happy to help! What specific information are you looking for?",
+                  },
+                ]}
+              />
+            </div>
           </div>
         </div>
 

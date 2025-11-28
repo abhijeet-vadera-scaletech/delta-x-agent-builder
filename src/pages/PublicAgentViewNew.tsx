@@ -435,41 +435,82 @@ export default function PublicAgentViewNew({
 
   // Default theme colors
   const defaultLight = {
-    primary: "#667eea",
-    background: "#ffffff",
-    accent: "#667eea",
-    foreground: "#1f2937",
-    border: "#e5e7eb",
-    card: "#f9fafb",
-    "card-foreground": "#1f2937",
+    inputTextColor: "#ffffff",
+    headerGradientEnd: "#3d3d3d",
+    chatBackgroundColor: "#ffffff",
+    headerGradientStart: "#000000",
+    sendButtonTextColor: "#ffffff",
+    inputBackgroundColor: "#000000",
+    senderMessageTextColor: "#ffffff",
+    incomingMessageTextColor: "#000000",
+    sendButtonBackgroundColor: "#000000",
+    senderMessageBackgroundColor: "#000000",
+    incomingMessageBackgroundColor: "#e3e3e3",
   };
 
   const defaultDark = {
-    primary: "#667eea",
-    background: "#1a1a1a",
-    accent: "#667eea",
-    foreground: "#ffffff",
-    border: "#374151",
-    card: "#2d2d2d",
-    "card-foreground": "#ffffff",
+    inputTextColor: "#ffffff",
+    headerGradientEnd: "#3d3d3d",
+    chatBackgroundColor: "#141414",
+    headerGradientStart: "#000000",
+    sendButtonTextColor: "#ffffff",
+    inputBackgroundColor: "#000000",
+    senderMessageTextColor: "#ffffff",
+    incomingMessageTextColor: "#000000",
+    sendButtonBackgroundColor: "#4d70ff",
+    senderMessageBackgroundColor: "#525dff",
+    incomingMessageBackgroundColor: "#ffffff",
   };
 
-  // Determine which theme to use
-  const isDark = theme === "dark";
+  // Theme Mode
+  const themeMode = personalization?.themeMode || "system";
+  // Determine which theme to use based on personalization themeMode
+  // If themeMode is 'light' or 'dark', force that theme
+  // If themeMode is 'system', use the user's system preference
+  const isDark =
+    themeMode === "dark"
+      ? true
+      : themeMode === "light"
+      ? false
+      : theme === "dark"; // Only use system theme if themeMode is 'system'
+
   const themeColors = isDark
     ? personalization?.dark || defaultDark
     : personalization?.light || defaultLight;
 
+  // Show theme toggle only if themeMode is 'system'
+  const showThemeToggle = themeMode === "system";
+
   // Theme-aware colors
-  const headerBg = themeColors.primary;
-  const chatBg = themeColors.background;
-  const userMsgBg = themeColors.primary;
-  const botMsgBg = themeColors.card;
-  const sendBtnBg = themeColors.accent;
-  const textColor = themeColors.foreground;
-  const borderColor = themeColors.border;
+  const headerBg = `linear-gradient(135deg, ${themeColors.headerGradientStart}, ${themeColors.headerGradientEnd})`;
+  const chatBg = themeColors.chatBackgroundColor;
+  const userMsgBg = themeColors.senderMessageBackgroundColor;
+  const userMsgTextColor = themeColors.senderMessageTextColor;
+  const botMsgBg = themeColors.incomingMessageBackgroundColor;
+  const botMsgTextColor = themeColors.incomingMessageTextColor;
+  const sendBtnBg = themeColors.sendButtonBackgroundColor;
+  const sendBtnTextColor = themeColors.sendButtonTextColor;
+  const inputBg = themeColors.inputBackgroundColor;
+  const inputTextColor = themeColors.inputTextColor;
+  const textColor = isDark ? "#ffffff" : "#1f2937";
+  const borderColor = isDark ? "#374151" : "#e5e7eb";
   const sidebarBg = isDark ? "#1e1e1e" : "#f9fafb";
-  const sidebarBorder = themeColors.border;
+
+  // Border configuration
+  const enableBorder = personalization?.enableBorder || false;
+  const borderWidth = personalization?.borderWidth || "1px";
+  const borderStyle = personalization?.borderStyle || "solid";
+
+  // Border for outer container (can be disabled)
+  const chatBorder = enableBorder
+    ? `${borderWidth} ${borderStyle} ${borderColor}`
+    : "none";
+
+  // Border for internal dividers (always visible, uses same width/style)
+  const dividerBorder = `${borderWidth} ${borderStyle} ${borderColor}`;
+
+  // Agent avatar
+  const agentAvatar = personalization?.agentAvatar || null;
 
   const regularSessions = activeSessions?.items || [];
   const archivedSessionsList = archivedSessions?.items || [];
@@ -542,13 +583,13 @@ export default function PublicAgentViewNew({
                 className="fixed lg:relative left-0 top-0 bottom-0 w-[280px] z-40 flex flex-col"
                 style={{
                   backgroundColor: sidebarBg,
-                  borderRight: `1px solid ${sidebarBorder}`,
+                  borderRight: dividerBorder,
                 }}
               >
                 {/* Sidebar Header */}
                 <div
                   className="h-14 p-4 flex items-center justify-between"
-                  style={{ borderBottom: `1px solid ${sidebarBorder}` }}
+                  style={{ borderBottom: dividerBorder }}
                 >
                   <h2
                     className="font-semibold text-sm flex items-center gap-2"
@@ -585,19 +626,15 @@ export default function PublicAgentViewNew({
                 <div className="p-3">
                   <button
                     onClick={handleNewChat}
-                    className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-opacity"
                     style={{
-                      backgroundColor: theme === "dark" ? "#374151" : "#e5e7eb",
-                      color: textColor,
+                      backgroundColor: sendBtnBg,
+                      color: sendBtnTextColor,
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        theme === "dark" ? "#4b5563" : "#d1d5db")
+                      (e.currentTarget.style.opacity = "0.9")
                     }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        theme === "dark" ? "#374151" : "#e5e7eb")
-                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                   >
                     <PlusIcon size={16} weight="bold" />
                     New Chat
@@ -609,7 +646,10 @@ export default function PublicAgentViewNew({
                   {/* Previous 7 Days */}
                   {regularSessions.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-gray-500 uppercase font-semibold mb-2 px-2">
+                      <p
+                        className="text-xs uppercase font-semibold mb-2 px-2"
+                        style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                      >
                         Previous 7 Days
                       </p>
                       {regularSessions.map((session) => (
@@ -620,17 +660,16 @@ export default function PublicAgentViewNew({
                           style={{
                             backgroundColor:
                               currentSession?.id === session.id
-                                ? theme === "dark"
+                                ? isDark
                                   ? "#374151"
                                   : "#e5e7eb"
                                 : "transparent",
                           }}
                           onMouseEnter={(e) => {
                             if (currentSession?.id !== session.id) {
-                              e.currentTarget.style.backgroundColor =
-                                theme === "dark"
-                                  ? "rgba(55, 65, 81, 0.5)"
-                                  : "rgba(229, 231, 235, 0.5)";
+                              e.currentTarget.style.backgroundColor = isDark
+                                ? "rgba(55, 65, 81, 0.5)"
+                                : "rgba(229, 231, 235, 0.5)";
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -648,10 +687,18 @@ export default function PublicAgentViewNew({
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-700 dark:text-white truncate max-w-[80%]">
+                              <p
+                                className="text-sm truncate max-w-[80%]"
+                                style={{ color: textColor }}
+                              >
                                 {session.title}
                               </p>
-                              <p className="text-xs text-gray-700 dark:text-white">
+                              <p
+                                className="text-xs"
+                                style={{
+                                  color: isDark ? "#9ca3af" : "#6b7280",
+                                }}
+                              >
                                 {formatDistanceToNow(
                                   new Date(session.lastMessageAt),
                                   {
@@ -670,16 +717,17 @@ export default function PublicAgentViewNew({
                               }}
                               className="p-1 rounded transition-colors"
                               style={{
-                                backgroundColor:
-                                  theme === "dark" ? "#1f2937" : "#ffffff",
+                                backgroundColor: isDark ? "#1f2937" : "#ffffff",
                               }}
                               onMouseEnter={(e) =>
-                                (e.currentTarget.style.backgroundColor =
-                                  theme === "dark" ? "#374151" : "#f3f4f6")
+                                (e.currentTarget.style.backgroundColor = isDark
+                                  ? "#374151"
+                                  : "#f3f4f6")
                               }
                               onMouseLeave={(e) =>
-                                (e.currentTarget.style.backgroundColor =
-                                  theme === "dark" ? "#1f2937" : "#ffffff")
+                                (e.currentTarget.style.backgroundColor = isDark
+                                  ? "#1f2937"
+                                  : "#ffffff")
                               }
                               title="Archive"
                             >
@@ -695,18 +743,17 @@ export default function PublicAgentViewNew({
                               }}
                               className="p-1 rounded transition-colors"
                               style={{
-                                backgroundColor:
-                                  theme === "dark" ? "#1f2937" : "#ffffff",
+                                backgroundColor: isDark ? "#1f2937" : "#ffffff",
                               }}
                               onMouseEnter={(e) =>
-                                (e.currentTarget.style.backgroundColor =
-                                  theme === "dark"
-                                    ? "rgba(127, 29, 29, 0.3)"
-                                    : "rgba(254, 202, 202, 0.5)")
+                                (e.currentTarget.style.backgroundColor = isDark
+                                  ? "rgba(127, 29, 29, 0.3)"
+                                  : "rgba(254, 202, 202, 0.5)")
                               }
                               onMouseLeave={(e) =>
-                                (e.currentTarget.style.backgroundColor =
-                                  theme === "dark" ? "#1f2937" : "#ffffff")
+                                (e.currentTarget.style.backgroundColor = isDark
+                                  ? "#1f2937"
+                                  : "#ffffff")
                               }
                               title="Delete"
                             >
@@ -723,7 +770,18 @@ export default function PublicAgentViewNew({
                     <div className="mb-4">
                       <button
                         onClick={() => setShowArchivedChats(!showArchivedChats)}
-                        className="w-full flex items-center justify-between px-2 py-1 text-xs text-gray-500 uppercase font-semibold hover:text-gray-400 transition-colors"
+                        className="w-full flex items-center justify-between px-2 py-1 text-xs uppercase font-semibold transition-colors"
+                        style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = isDark
+                            ? "#d1d5db"
+                            : "#9ca3af")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = isDark
+                            ? "#9ca3af"
+                            : "#6b7280")
+                        }
                       >
                         <span className="flex items-center gap-2">
                           <ArchiveIcon size={14} />
@@ -755,7 +813,7 @@ export default function PublicAgentViewNew({
                                   style={{
                                     backgroundColor:
                                       currentSession?.id === session.id
-                                        ? theme === "dark"
+                                        ? isDark
                                           ? "#374151"
                                           : "#e5e7eb"
                                         : "transparent",
@@ -763,7 +821,7 @@ export default function PublicAgentViewNew({
                                   onMouseEnter={(e) => {
                                     if (currentSession?.id !== session.id) {
                                       e.currentTarget.style.backgroundColor =
-                                        theme === "dark"
+                                        isDark
                                           ? "rgba(55, 65, 81, 0.5)"
                                           : "rgba(229, 231, 235, 0.5)";
                                     }
@@ -783,10 +841,18 @@ export default function PublicAgentViewNew({
                                       />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm text-gray-700 dark:text-white truncate max-w-[80%]">
+                                      <p
+                                        className="text-sm truncate max-w-[80%]"
+                                        style={{ color: textColor }}
+                                      >
                                         {session.title}
                                       </p>
-                                      <p className="text-xs text-gray-700 dark:text-white">
+                                      <p
+                                        className="text-xs"
+                                        style={{
+                                          color: isDark ? "#9ca3af" : "#6b7280",
+                                        }}
+                                      >
                                         {formatDistanceToNow(
                                           new Date(session.lastMessageAt),
                                           {
@@ -805,22 +871,19 @@ export default function PublicAgentViewNew({
                                       }}
                                       className="p-1 rounded transition-colors"
                                       style={{
-                                        backgroundColor:
-                                          theme === "dark"
-                                            ? "#1f2937"
-                                            : "#ffffff",
+                                        backgroundColor: isDark
+                                          ? "#1f2937"
+                                          : "#ffffff",
                                       }}
                                       onMouseEnter={(e) =>
                                         (e.currentTarget.style.backgroundColor =
-                                          theme === "dark"
+                                          isDark
                                             ? "rgba(6, 78, 59, 0.3)"
                                             : "rgba(187, 247, 208, 0.5)")
                                       }
                                       onMouseLeave={(e) =>
                                         (e.currentTarget.style.backgroundColor =
-                                          theme === "dark"
-                                            ? "#1f2937"
-                                            : "#ffffff")
+                                          isDark ? "#1f2937" : "#ffffff")
                                       }
                                       title="Restore"
                                     >
@@ -837,22 +900,19 @@ export default function PublicAgentViewNew({
                                       }}
                                       className="p-1 rounded transition-colors"
                                       style={{
-                                        backgroundColor:
-                                          theme === "dark"
-                                            ? "#1f2937"
-                                            : "#ffffff",
+                                        backgroundColor: isDark
+                                          ? "#1f2937"
+                                          : "#ffffff",
                                       }}
                                       onMouseEnter={(e) =>
                                         (e.currentTarget.style.backgroundColor =
-                                          theme === "dark"
+                                          isDark
                                             ? "rgba(127, 29, 29, 0.3)"
                                             : "rgba(254, 202, 202, 0.5)")
                                       }
                                       onMouseLeave={(e) =>
                                         (e.currentTarget.style.backgroundColor =
-                                          theme === "dark"
-                                            ? "#1f2937"
-                                            : "#ffffff")
+                                          isDark ? "#1f2937" : "#ffffff")
                                       }
                                       title="Delete"
                                     >
@@ -896,7 +956,7 @@ export default function PublicAgentViewNew({
             className="h-14 flex items-center justify-between px-4"
             style={{
               backgroundColor: chatBg,
-              borderBottom: `1px solid ${borderColor}`,
+              borderBottom: dividerBorder,
             }}
           >
             {/* Left: Sidebar Toggle + Agent Name */}
@@ -926,11 +986,26 @@ export default function PublicAgentViewNew({
                 )}
               </button>
               <div className="flex items-center gap-2">
-                <RobotIcon
-                  size={20}
-                  className="text-purple-400"
-                  weight="duotone"
-                />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+                  {agentAvatar ? (
+                    <img
+                      src={agentAvatar}
+                      alt={agent.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: headerBg }}
+                    >
+                      <RobotIcon
+                        size={16}
+                        className="text-white"
+                        weight="duotone"
+                      />
+                    </div>
+                  )}
+                </div>
                 <span
                   className="font-semibold text-sm"
                   style={{ color: textColor }}
@@ -959,38 +1034,40 @@ export default function PublicAgentViewNew({
                 Temporary
               </span>
             )} */}
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg transition-colors"
-                style={{ backgroundColor: "transparent" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    theme === "dark" ? "#374151" : "#e5e7eb")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
-                title={
-                  theme === "dark"
-                    ? "Switch to Light Mode"
-                    : "Switch to Dark Mode"
-                }
-              >
-                {theme === "dark" ? (
-                  <SunIcon
-                    size={20}
-                    weight="duotone"
-                    className="text-yellow-400"
-                  />
-                ) : (
-                  <MoonIcon
-                    size={20}
-                    weight="duotone"
-                    className="text-indigo-400"
-                  />
-                )}
-              </button>
+              {/* Theme Toggle - Only show if themeMode is 'system' */}
+              {showThemeToggle && (
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg transition-colors"
+                  style={{ backgroundColor: "transparent" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      theme === "dark" ? "#374151" : "#e5e7eb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                  title={
+                    theme === "dark"
+                      ? "Switch to Light Mode"
+                      : "Switch to Dark Mode"
+                  }
+                >
+                  {theme === "dark" ? (
+                    <SunIcon
+                      size={20}
+                      weight="duotone"
+                      className="text-yellow-400"
+                    />
+                  ) : (
+                    <MoonIcon
+                      size={20}
+                      weight="duotone"
+                      className="text-indigo-400"
+                    />
+                  )}
+                </button>
+              )}
               {user && (
                 <div className="relative group">
                   <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
@@ -1013,12 +1090,12 @@ export default function PublicAgentViewNew({
                     className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{
                       backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
-                      border: `1px solid ${borderColor}`,
+                      border: dividerBorder,
                     }}
                   >
                     <div
                       className="p-3"
-                      style={{ borderBottom: `1px solid ${borderColor}` }}
+                      style={{ borderBottom: dividerBorder }}
                     >
                       <p
                         className="text-sm font-medium truncate"
@@ -1063,14 +1140,22 @@ export default function PublicAgentViewNew({
             {messages.length === 0 && !currentMessage && !selectedThreadId ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4"
-                  style={{ background: headerBg }}
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4 overflow-hidden"
+                  style={{ background: agentAvatar ? "transparent" : headerBg }}
                 >
-                  <RobotIcon
-                    size={40}
-                    weight="duotone"
-                    className="text-white"
-                  />
+                  {agentAvatar ? (
+                    <img
+                      src={agentAvatar}
+                      alt={agent.name}
+                      className="w-20 h-20 rounded-2xl object-cover"
+                    />
+                  ) : (
+                    <RobotIcon
+                      size={40}
+                      weight="duotone"
+                      className="text-white"
+                    />
+                  )}
                 </div>
                 <h2
                   className="text-2xl font-bold mb-2"
@@ -1107,14 +1192,24 @@ export default function PublicAgentViewNew({
                   >
                     {msg.role === "assistant" && (
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ background: headerBg }}
+                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                        style={{
+                          background: agentAvatar ? "transparent" : headerBg,
+                        }}
                       >
-                        <RobotIcon
-                          size={16}
-                          weight="duotone"
-                          className="text-white"
-                        />
+                        {agentAvatar ? (
+                          <img
+                            src={agentAvatar}
+                            alt={agent.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <RobotIcon
+                            size={16}
+                            weight="duotone"
+                            className="text-white"
+                          />
+                        )}
                       </div>
                     )}
                     <div
@@ -1124,10 +1219,8 @@ export default function PublicAgentViewNew({
                           msg.role === "user" ? userMsgBg : botMsgBg,
                         color:
                           msg.role === "user"
-                            ? "#ffffff"
-                            : theme === "dark"
-                            ? "#ffffff"
-                            : "#1f2937",
+                            ? userMsgTextColor
+                            : botMsgTextColor,
                       }}
                     >
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -1161,23 +1254,30 @@ export default function PublicAgentViewNew({
                     className="flex gap-3 justify-start"
                   >
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: headerBg }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                      style={{
+                        background: agentAvatar ? "transparent" : headerBg,
+                      }}
                     >
-                      <RobotIcon
-                        size={16}
-                        weight="duotone"
-                        className="text-white"
-                      />
+                      {agentAvatar ? (
+                        <img
+                          src={agentAvatar}
+                          alt={agent.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <RobotIcon
+                          size={16}
+                          weight="duotone"
+                          className="text-white"
+                        />
+                      )}
                     </div>
                     <div
                       className="px-4 py-3 rounded-2xl"
                       style={{ backgroundColor: botMsgBg }}
                     >
-                      <TypingLoader
-                        dotColor={theme === "dark" ? "#ffffff" : "#1f2937"}
-                        size={6}
-                      />
+                      <TypingLoader dotColor={botMsgTextColor} size={6} />
                     </div>
                   </motion.div>
                 )}
@@ -1189,20 +1289,30 @@ export default function PublicAgentViewNew({
                     className="flex gap-3 justify-start"
                   >
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: headerBg }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                      style={{
+                        background: agentAvatar ? "transparent" : headerBg,
+                      }}
                     >
-                      <RobotIcon
-                        size={16}
-                        weight="duotone"
-                        className="text-white"
-                      />
+                      {agentAvatar ? (
+                        <img
+                          src={agentAvatar}
+                          alt={agent.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <RobotIcon
+                          size={16}
+                          weight="duotone"
+                          className="text-white"
+                        />
+                      )}
                     </div>
                     <div
                       className="max-w-[70%] px-4 py-2.5 rounded-2xl"
                       style={{
                         backgroundColor: botMsgBg,
-                        color: theme === "dark" ? "#ffffff" : "#1f2937",
+                        color: botMsgTextColor,
                       }}
                     >
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -1228,7 +1338,7 @@ export default function PublicAgentViewNew({
             className="p-4"
             style={{
               backgroundColor: chatBg,
-              borderTop: `1px solid ${borderColor}`,
+              borderTop: dividerBorder,
             }}
           >
             {isCurrentSessionArchived ? (
@@ -1238,9 +1348,7 @@ export default function PublicAgentViewNew({
                   className="flex items-center justify-between px-4 py-3 rounded-xl"
                   style={{
                     backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6",
-                    border: `1px solid ${
-                      theme === "dark" ? "#4b5563" : "#d1d5db"
-                    }`,
+                    border: dividerBorder,
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -1265,7 +1373,7 @@ export default function PublicAgentViewNew({
                     className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     style={{
                       backgroundColor: sendBtnBg,
-                      color: "#ffffff",
+                      color: sendBtnTextColor,
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.opacity = "0.9";
@@ -1296,11 +1404,9 @@ export default function PublicAgentViewNew({
                   style={{
                     minHeight: "48px",
                     maxHeight: "120px",
-                    backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6",
-                    border: `1px solid ${
-                      theme === "dark" ? "#4b5563" : "#d1d5db"
-                    }`,
-                    color: textColor,
+                    backgroundColor: inputBg,
+                    border: dividerBorder,
+                    color: inputTextColor,
                   }}
                 />
                 <button
@@ -1312,7 +1418,7 @@ export default function PublicAgentViewNew({
                   <PaperPlaneRightIcon
                     size={20}
                     weight="fill"
-                    className="text-white"
+                    style={{ color: sendBtnTextColor }}
                   />
                 </button>
               </div>

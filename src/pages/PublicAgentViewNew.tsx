@@ -57,7 +57,9 @@ export default function PublicAgentViewNew({
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : false
+  );
   const [showArchivedChats, setShowArchivedChats] = useState(false);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -600,14 +602,12 @@ export default function PublicAgentViewNew({
                   </h2>
                   <button
                     onClick={() => setSidebarOpen(false)}
-                    className="p-1 rounded transition-colors lg:hidden"
-                    style={{
-                      backgroundColor:
-                        theme === "dark" ? "transparent" : "transparent",
-                    }}
+                    className="p-1 rounded transition-colors lg:hidden focus:outline-none"
+                    style={{ backgroundColor: "transparent" }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        theme === "dark" ? "#374151" : "#e5e7eb")
+                      (e.currentTarget.style.backgroundColor = isDark
+                        ? "#374151"
+                        : "#e5e7eb")
                     }
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.backgroundColor = "transparent")
@@ -615,9 +615,7 @@ export default function PublicAgentViewNew({
                   >
                     <XIcon
                       size={18}
-                      style={{
-                        color: theme === "dark" ? "#9ca3af" : "#6b7280",
-                      }}
+                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                     />
                   </button>
                 </div>
@@ -626,7 +624,7 @@ export default function PublicAgentViewNew({
                 <div className="p-3">
                   <button
                     onClick={handleNewChat}
-                    className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-opacity"
+                    className="w-full py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-opacity focus:outline-none"
                     style={{
                       backgroundColor: sendBtnBg,
                       color: sendBtnTextColor,
@@ -939,21 +937,15 @@ export default function PublicAgentViewNew({
 
       {/* Main Content */}
       {!isAuthRequired && (
-        <motion.div
-          initial={{
-            width: "100dvw",
-            left: 0,
+        <div
+          className="flex-1 flex flex-col h-dvh w-full"
+          style={{
+            border: chatBorder,
           }}
-          animate={{
-            width: !sidebarOpen ? "100dvw" : "calc(100dvw - 280px)",
-            left: !sidebarOpen ? 0 : 280,
-          }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="flex-1 flex flex-col fixed h-dvh"
         >
           {/* Top Header */}
           <div
-            className="h-14 flex items-center justify-between px-4"
+            className="h-14 flex items-center justify-between px-2 sm:px-4"
             style={{
               backgroundColor: chatBg,
               borderBottom: dividerBorder,
@@ -963,11 +955,12 @@ export default function PublicAgentViewNew({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg transition-colors focus:outline-none"
                 style={{ backgroundColor: "transparent" }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    theme === "dark" ? "#374151" : "#e5e7eb")
+                  (e.currentTarget.style.backgroundColor = isDark
+                    ? "#374151"
+                    : "#e5e7eb")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.backgroundColor = "transparent")
@@ -976,38 +969,43 @@ export default function PublicAgentViewNew({
                 {sidebarOpen ? (
                   <CaretLeftIcon
                     size={20}
-                    style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                    style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                   />
                 ) : (
                   <ListIcon
                     size={20}
-                    style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                    style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                   />
                 )}
               </button>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                   {agentAvatar ? (
                     <img
                       src={agentAvatar}
                       alt={agent.name}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
                     />
                   ) : (
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
                       style={{ background: headerBg }}
                     >
                       <RobotIcon
+                        size={14}
+                        className="text-white sm:hidden"
+                        weight="duotone"
+                      />
+                      <RobotIcon
                         size={16}
-                        className="text-white"
+                        className="text-white hidden sm:block"
                         weight="duotone"
                       />
                     </div>
                   )}
                 </div>
                 <span
-                  className="font-semibold text-sm"
+                  className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px] md:max-w-none"
                   style={{ color: textColor }}
                 >
                   {agent.name}
@@ -1026,8 +1024,8 @@ export default function PublicAgentViewNew({
               <span
                 className="text-xs px-3 py-1.5 rounded-full"
                 style={{
-                  backgroundColor: theme === "dark" ? "#374151" : "#e5e7eb",
-                  color: theme === "dark" ? "#d1d5db" : "#6b7280",
+                  backgroundColor: isDark ? "#374151" : "#e5e7eb",
+                  color: isDark ? "#d1d5db" : "#6b7280",
                   border: `1px solid ${borderColor}`,
                 }}
               >
@@ -1038,22 +1036,21 @@ export default function PublicAgentViewNew({
               {showThemeToggle && (
                 <button
                   onClick={toggleTheme}
-                  className="p-2 rounded-lg transition-colors"
+                  className="p-2 rounded-lg transition-colors focus:outline-none"
                   style={{ backgroundColor: "transparent" }}
                   onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      theme === "dark" ? "#374151" : "#e5e7eb")
+                    (e.currentTarget.style.backgroundColor = isDark
+                      ? "#374151"
+                      : "#e5e7eb")
                   }
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor = "transparent")
                   }
                   title={
-                    theme === "dark"
-                      ? "Switch to Light Mode"
-                      : "Switch to Dark Mode"
+                    isDark ? "Switch to Light Mode" : "Switch to Dark Mode"
                   }
                 >
-                  {theme === "dark" ? (
+                  {isDark ? (
                     <SunIcon
                       size={20}
                       weight="duotone"
@@ -1070,7 +1067,7 @@ export default function PublicAgentViewNew({
               )}
               {user && (
                 <div className="relative group">
-                  <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
+                  <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden focus:outline-none">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
@@ -1089,7 +1086,7 @@ export default function PublicAgentViewNew({
                   <div
                     className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
                     style={{
-                      backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
+                      backgroundColor: isDark ? "#1f2937" : "#ffffff",
                       border: dividerBorder,
                     }}
                   >
@@ -1106,9 +1103,7 @@ export default function PublicAgentViewNew({
                       {user.email && (
                         <p
                           className="text-xs truncate"
-                          style={{
-                            color: theme === "dark" ? "#9ca3af" : "#6b7280",
-                          }}
+                          style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                         >
                           {user.email}
                         </p>
@@ -1116,11 +1111,12 @@ export default function PublicAgentViewNew({
                     </div>
                     <button
                       onClick={handleSignOut}
-                      className="w-full px-3 py-2 text-left text-sm text-red-400 transition-colors flex items-center gap-2"
+                      className="w-full px-3 py-2 text-left text-sm text-red-400 transition-colors flex items-center gap-2 focus:outline-none"
                       style={{ backgroundColor: "transparent" }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor =
-                          theme === "dark" ? "#374151" : "#f3f4f6")
+                        (e.currentTarget.style.backgroundColor = isDark
+                          ? "#374151"
+                          : "#f3f4f6")
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.backgroundColor = "transparent")
@@ -1138,41 +1134,48 @@ export default function PublicAgentViewNew({
           {/* Chat Messages Area */}
           <div className="flex-1 overflow-y-auto">
             {messages.length === 0 && !currentMessage && !selectedThreadId ? (
-              <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-6">
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4 overflow-hidden"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 overflow-hidden"
                   style={{ background: agentAvatar ? "transparent" : headerBg }}
                 >
                   {agentAvatar ? (
                     <img
                       src={agentAvatar}
                       alt={agent.name}
-                      className="w-20 h-20 rounded-2xl object-cover"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover"
                     />
                   ) : (
-                    <RobotIcon
-                      size={40}
-                      weight="duotone"
-                      className="text-white"
-                    />
+                    <>
+                      <RobotIcon
+                        size={32}
+                        weight="duotone"
+                        className="text-white sm:hidden"
+                      />
+                      <RobotIcon
+                        size={40}
+                        weight="duotone"
+                        className="text-white hidden sm:block"
+                      />
+                    </>
                   )}
                 </div>
                 <h2
-                  className="text-2xl font-bold mb-2"
+                  className="text-xl sm:text-2xl font-bold mb-2"
                   style={{ color: textColor }}
                 >
                   {agent.name}
                 </h2>
                 <p
-                  className="text-sm max-w-md mb-6"
-                  style={{ color: theme === "dark" ? "#9ca3af" : "#6b7280" }}
+                  className="text-xs sm:text-sm max-w-sm sm:max-w-md mb-4 sm:mb-6 px-2"
+                  style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                 >
                   {agent.description ||
                     "This AI assistant engages with you to understand your perspectives, challenges, and expectations about the current AI landscape."}
                 </p>
                 {agent.greetingMessage && (
                   <p
-                    className="text-base font-medium max-w-md"
+                    className="text-sm sm:text-base font-medium max-w-sm sm:max-w-md px-2"
                     style={{ color: textColor }}
                   >
                     {agent.greetingMessage}
@@ -1180,19 +1183,19 @@ export default function PublicAgentViewNew({
                 )}
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto py-6 px-4 space-y-4">
+              <div className="max-w-3xl mx-auto py-4 sm:py-6 px-3 sm:px-4 space-y-3 sm:space-y-4">
                 {messages.map((msg) => (
                   <motion.div
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-3 ${
+                    className={`flex gap-2 sm:gap-3 ${
                       msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
                     {msg.role === "assistant" && (
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                         style={{
                           background: agentAvatar ? "transparent" : headerBg,
                         }}
@@ -1201,19 +1204,26 @@ export default function PublicAgentViewNew({
                           <img
                             src={agentAvatar}
                             alt={agent.name}
-                            className="w-8 h-8 rounded-full object-cover"
+                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                           />
                         ) : (
-                          <RobotIcon
-                            size={16}
-                            weight="duotone"
-                            className="text-white"
-                          />
+                          <>
+                            <RobotIcon
+                              size={12}
+                              weight="duotone"
+                              className="text-white sm:hidden"
+                            />
+                            <RobotIcon
+                              size={16}
+                              weight="duotone"
+                              className="text-white hidden sm:block"
+                            />
+                          </>
                         )}
                       </div>
                     )}
                     <div
-                      className="max-w-[70%] px-4 py-2.5 rounded-2xl"
+                      className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
                       style={{
                         backgroundColor:
                           msg.role === "user" ? userMsgBg : botMsgBg,
@@ -1223,12 +1233,12 @@ export default function PublicAgentViewNew({
                             : botMsgTextColor,
                       }}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                         {msg.content}
                       </p>
                     </div>
                     {msg.role === "user" && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {user?.photoURL ? (
                           <img
                             src={user.photoURL}
@@ -1236,11 +1246,18 @@ export default function PublicAgentViewNew({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <UserIcon
-                            size={16}
-                            weight="bold"
-                            className="text-white"
-                          />
+                          <>
+                            <UserIcon
+                              size={12}
+                              weight="bold"
+                              className="text-white sm:hidden"
+                            />
+                            <UserIcon
+                              size={16}
+                              weight="bold"
+                              className="text-white hidden sm:block"
+                            />
+                          </>
                         )}
                       </div>
                     )}
@@ -1251,10 +1268,10 @@ export default function PublicAgentViewNew({
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-3 justify-start"
+                    className="flex gap-2 sm:gap-3 justify-start"
                   >
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                       style={{
                         background: agentAvatar ? "transparent" : headerBg,
                       }}
@@ -1263,18 +1280,25 @@ export default function PublicAgentViewNew({
                         <img
                           src={agentAvatar}
                           alt={agent.name}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                         />
                       ) : (
-                        <RobotIcon
-                          size={16}
-                          weight="duotone"
-                          className="text-white"
-                        />
+                        <>
+                          <RobotIcon
+                            size={12}
+                            weight="duotone"
+                            className="text-white sm:hidden"
+                          />
+                          <RobotIcon
+                            size={16}
+                            weight="duotone"
+                            className="text-white hidden sm:block"
+                          />
+                        </>
                       )}
                     </div>
                     <div
-                      className="px-4 py-3 rounded-2xl"
+                      className="px-3 sm:px-4 py-2 sm:py-3 rounded-2xl"
                       style={{ backgroundColor: botMsgBg }}
                     >
                       <TypingLoader dotColor={botMsgTextColor} size={6} />
@@ -1286,10 +1310,10 @@ export default function PublicAgentViewNew({
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-3 justify-start"
+                    className="flex gap-2 sm:gap-3 justify-start"
                   >
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
                       style={{
                         background: agentAvatar ? "transparent" : headerBg,
                       }}
@@ -1298,24 +1322,31 @@ export default function PublicAgentViewNew({
                         <img
                           src={agentAvatar}
                           alt={agent.name}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                         />
                       ) : (
-                        <RobotIcon
-                          size={16}
-                          weight="duotone"
-                          className="text-white"
-                        />
+                        <>
+                          <RobotIcon
+                            size={12}
+                            weight="duotone"
+                            className="text-white sm:hidden"
+                          />
+                          <RobotIcon
+                            size={16}
+                            weight="duotone"
+                            className="text-white hidden sm:block"
+                          />
+                        </>
                       )}
                     </div>
                     <div
-                      className="max-w-[70%] px-4 py-2.5 rounded-2xl"
+                      className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
                       style={{
                         backgroundColor: botMsgBg,
                         color: botMsgTextColor,
                       }}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                         {currentMessage}
                         <motion.span
                           animate={{ opacity: [1, 0] }}
@@ -1335,7 +1366,7 @@ export default function PublicAgentViewNew({
 
           {/* Input Area or Archived Notice */}
           <div
-            className="p-4"
+            className="p-2 sm:p-4"
             style={{
               backgroundColor: chatBg,
               borderTop: dividerBorder,
@@ -1345,32 +1376,29 @@ export default function PublicAgentViewNew({
               // Archived chat notice
               <div className="max-w-3xl mx-auto">
                 <div
-                  className="flex items-center justify-between px-4 py-3 rounded-xl"
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-3 sm:px-4 py-3 rounded-xl"
                   style={{
-                    backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6",
+                    backgroundColor: isDark ? "#374151" : "#f3f4f6",
                     border: dividerBorder,
                   }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <ArchiveIcon
-                      size={20}
-                      className={
-                        theme === "dark" ? "text-gray-400" : "text-gray-600"
-                      }
+                      size={18}
+                      className={isDark ? "text-gray-400" : "text-gray-600"}
                     />
                     <p
-                      className="text-sm"
+                      className="text-xs sm:text-sm"
                       style={{
-                        color: theme === "dark" ? "#9ca3af" : "#6b7280",
+                        color: isDark ? "#9ca3af" : "#6b7280",
                       }}
                     >
-                      This conversation is archived. To continue, please
-                      unarchive it first.
+                      This conversation is archived. Unarchive to continue.
                     </p>
                   </div>
                   <button
                     onClick={() => handleUnarchiveSession(selectedThreadId!)}
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors focus:outline-none"
                     style={{
                       backgroundColor: sendBtnBg,
                       color: sendBtnTextColor,
@@ -1382,13 +1410,13 @@ export default function PublicAgentViewNew({
                       e.currentTarget.style.opacity = "1";
                     }}
                   >
-                    Unarchive Conversation
+                    Unarchive
                   </button>
                 </div>
               </div>
             ) : (
               // Regular input area
-              <div className="max-w-3xl mx-auto flex gap-3 items-end">
+              <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3 items-end">
                 <textarea
                   value={userMessage}
                   onChange={(e) => setUserMessage(e.target.value)}
@@ -1398,11 +1426,11 @@ export default function PublicAgentViewNew({
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Hello"
+                  placeholder="Type a message..."
                   rows={1}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm resize-none focus:outline-none transition-colors"
+                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm resize-none focus:outline-none transition-colors"
                   style={{
-                    minHeight: "48px",
+                    minHeight: "44px",
                     maxHeight: "120px",
                     backgroundColor: inputBg,
                     border: dividerBorder,
@@ -1412,19 +1440,26 @@ export default function PublicAgentViewNew({
                 <button
                   onClick={handleSendMessage}
                   disabled={!userMessage.trim() || streaming}
-                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 focus:outline-none"
                   style={{ backgroundColor: sendBtnBg }}
                 >
                   <PaperPlaneRightIcon
+                    size={18}
+                    weight="fill"
+                    className="sm:hidden"
+                    style={{ color: sendBtnTextColor }}
+                  />
+                  <PaperPlaneRightIcon
                     size={20}
                     weight="fill"
+                    className="hidden sm:block"
                     style={{ color: sendBtnTextColor }}
                   />
                 </button>
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

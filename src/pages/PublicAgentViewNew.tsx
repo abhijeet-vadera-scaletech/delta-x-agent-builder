@@ -46,6 +46,7 @@ import {
   signOut,
 } from "../services/authService";
 import { showToast } from "../utils/toast";
+import { Agent, ChatMessage } from "@/types";
 
 export default function PublicAgentViewNew({
   isTesting,
@@ -931,527 +932,678 @@ export default function PublicAgentViewNew({
 
       {/* Main Content */}
       {!isAuthRequired && (
-        <div className="flex-1 flex flex-col h-dvh w-full">
-          {/* Top Header */}
-          <div
-            className="h-14 flex items-center justify-between px-2 sm:px-4"
-            style={{
-              backgroundColor: chatBg,
-              borderBottom: dividerBorder,
-            }}
-          >
-            {/* Left: Sidebar Toggle + Agent Name */}
-            <div className="flex items-center gap-3">
-              {!isTesting && (
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-1.5 sm:p-2 rounded-lg transition-colors focus:outline-none"
-                  style={{ backgroundColor: "transparent" }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = isDark
-                      ? "#374151"
-                      : "#e5e7eb")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
-                >
-                  {sidebarOpen ? (
-                    <CaretLeftIcon
-                      size={20}
-                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                    />
-                  ) : (
-                    <ListIcon
-                      size={20}
-                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                    />
-                  )}
-                </button>
+        <>
+          {window.innerWidth > 768 ? (
+            <motion.div
+              initial={{
+                width: "100dvw",
+                left: 0,
+              }}
+              animate={{
+                width: !sidebarOpen ? "100dvw" : "calc(100dvw - 280px)",
+                left: !sidebarOpen ? 0 : 280,
+              }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="flex-1 flex flex-col fixed h-dvh"
+            >
+              <MainContent
+                chatBg={chatBg}
+                dividerBorder={dividerBorder}
+                isDark={isDark}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                isTesting={isTesting}
+                agentAvatar={agentAvatar}
+                agent={agent}
+                headerBg={headerBg}
+                textColor={textColor}
+                showThemeToggle={showThemeToggle}
+                borderColor={borderColor}
+                toggleTheme={toggleTheme}
+                user={user}
+                handleSignOut={handleSignOut}
+                messages={messages}
+                currentMessage={currentMessage}
+                selectedThreadId={selectedThreadId}
+                userMsgBg={userMsgBg}
+                botMsgBg={botMsgBg}
+                userMsgTextColor={userMsgTextColor}
+                botMsgTextColor={botMsgTextColor}
+                streaming={streaming}
+                messagesEndRef={messagesEndRef}
+                handleUnarchiveSession={handleUnarchiveSession}
+                sendBtnBg={sendBtnBg}
+                sendBtnTextColor={sendBtnTextColor}
+                isCurrentSessionArchived={isCurrentSessionArchived}
+                userMessage={userMessage}
+                setUserMessage={setUserMessage}
+                handleSendMessage={handleSendMessage}
+                inputBg={inputBg}
+                inputTextColor={inputTextColor}
+              />
+            </motion.div>
+          ) : (
+            <div className="flex-1 flex flex-col h-dvh w-full">
+              <MainContent
+                chatBg={chatBg}
+                dividerBorder={dividerBorder}
+                isDark={isDark}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                isTesting={isTesting}
+                agentAvatar={agentAvatar}
+                agent={agent}
+                headerBg={headerBg}
+                textColor={textColor}
+                showThemeToggle={showThemeToggle}
+                borderColor={borderColor}
+                toggleTheme={toggleTheme}
+                user={user}
+                handleSignOut={handleSignOut}
+                messages={messages}
+                currentMessage={currentMessage}
+                selectedThreadId={selectedThreadId}
+                userMsgBg={userMsgBg}
+                botMsgBg={botMsgBg}
+                userMsgTextColor={userMsgTextColor}
+                botMsgTextColor={botMsgTextColor}
+                streaming={streaming}
+                messagesEndRef={messagesEndRef}
+                handleUnarchiveSession={handleUnarchiveSession}
+                sendBtnBg={sendBtnBg}
+                sendBtnTextColor={sendBtnTextColor}
+                isCurrentSessionArchived={isCurrentSessionArchived}
+                userMessage={userMessage}
+                setUserMessage={setUserMessage}
+                handleSendMessage={handleSendMessage}
+                inputBg={inputBg}
+                inputTextColor={inputTextColor}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+const MainContent = ({
+  chatBg,
+  dividerBorder,
+  isDark,
+  sidebarOpen,
+  setSidebarOpen,
+  isTesting,
+  agentAvatar,
+  agent,
+  headerBg,
+  textColor,
+  showThemeToggle,
+  borderColor,
+  toggleTheme,
+  user,
+  handleSignOut,
+  messages,
+  currentMessage,
+  selectedThreadId,
+  userMsgBg,
+  botMsgBg,
+  userMsgTextColor,
+  botMsgTextColor,
+  streaming,
+  messagesEndRef,
+  handleUnarchiveSession,
+  sendBtnBg,
+  sendBtnTextColor,
+  isCurrentSessionArchived,
+  userMessage,
+  setUserMessage,
+  handleSendMessage,
+  inputBg,
+  inputTextColor,
+}: {
+  chatBg: string;
+  dividerBorder: string;
+  isDark: boolean;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  isTesting?: boolean;
+  agentAvatar: string | null;
+  agent: Agent;
+  headerBg: string;
+  textColor: string;
+  showThemeToggle: boolean;
+  borderColor: string;
+  toggleTheme: () => void;
+  user: FirebaseUser | null;
+  handleSignOut: () => void;
+  messages: ChatMessage[];
+  currentMessage: string;
+  selectedThreadId: string | null;
+  userMsgBg: string;
+  botMsgBg: string;
+  userMsgTextColor: string;
+  botMsgTextColor: string;
+  streaming: boolean;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+  handleUnarchiveSession: (sessionId: string) => void;
+  sendBtnBg: string;
+  sendBtnTextColor: string;
+  isCurrentSessionArchived: boolean;
+  userMessage: string;
+  setUserMessage: (message: string) => void;
+  handleSendMessage: () => void;
+  inputBg: string;
+  inputTextColor: string;
+}) => {
+  return (
+    <>
+      {/* Top Header */}
+      <div
+        className="h-14 flex items-center justify-between px-2 sm:px-4"
+        style={{
+          backgroundColor: chatBg,
+          borderBottom: dividerBorder,
+        }}
+      >
+        {/* Left: Sidebar Toggle + Agent Name */}
+        <div className="flex items-center gap-3">
+          {!isTesting && (
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1.5 sm:p-2 rounded-lg transition-colors focus:outline-none"
+              style={{ backgroundColor: "transparent" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = isDark
+                  ? "#374151"
+                  : "#e5e7eb")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              {sidebarOpen ? (
+                <CaretLeftIcon
+                  size={20}
+                  style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                />
+              ) : (
+                <ListIcon
+                  size={20}
+                  style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                />
               )}
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {agentAvatar ? (
-                    <img
-                      src={agentAvatar}
-                      alt={agent.name}
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
-                      style={{ background: headerBg }}
+            </button>
+          )}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+              {agentAvatar ? (
+                <img
+                  src={agentAvatar}
+                  alt={agent.name}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
+                  style={{ background: headerBg }}
+                >
+                  <RobotIcon
+                    size={14}
+                    className="text-white sm:hidden"
+                    weight="duotone"
+                  />
+                  <RobotIcon
+                    size={16}
+                    className="text-white hidden sm:block"
+                    weight="duotone"
+                  />
+                </div>
+              )}
+            </div>
+            <span
+              className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px] md:max-w-none"
+              style={{ color: textColor }}
+            >
+              {agent.name}
+            </span>
+            {agent.isActive === false && (
+              <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded">
+                Latest
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Temporary Badge + Theme Toggle + User Profile */}
+        <div className="flex items-center gap-3">
+          {isTesting && (
+            <span
+              className="text-xs px-3 py-1.5 rounded-full"
+              style={{
+                backgroundColor: isDark ? "#374151" : "#e5e7eb",
+                color: isDark ? "#d1d5db" : "#6b7280",
+                border: `1px solid ${borderColor}`,
+              }}
+            >
+              Temporary
+            </span>
+          )}
+          {/* Theme Toggle - Only show if themeMode is 'system' */}
+          {showThemeToggle && (
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg transition-colors focus:outline-none"
+              style={{ backgroundColor: "transparent" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = isDark
+                  ? "#374151"
+                  : "#e5e7eb")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDark ? (
+                <SunIcon
+                  size={20}
+                  weight="duotone"
+                  className="text-yellow-400"
+                />
+              ) : (
+                <MoonIcon
+                  size={20}
+                  weight="duotone"
+                  className="text-indigo-400"
+                />
+              )}
+            </button>
+          )}
+          {user && (
+            <div className="relative group">
+              <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden focus:outline-none">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={getUserDisplayName(user)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <UserIcon size={16} weight="bold" className="text-white" />
+                )}
+              </button>
+              {/* Dropdown */}
+              <div
+                className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
+                style={{
+                  backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                  border: dividerBorder,
+                }}
+              >
+                <div className="p-3" style={{ borderBottom: dividerBorder }}>
+                  <p
+                    className="text-sm font-medium truncate"
+                    style={{ color: textColor }}
+                  >
+                    {getUserDisplayName(user)}
+                  </p>
+                  {user.email && (
+                    <p
+                      className="text-xs truncate"
+                      style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
                     >
-                      <RobotIcon
-                        size={14}
-                        className="text-white sm:hidden"
-                        weight="duotone"
-                      />
-                      <RobotIcon
-                        size={16}
-                        className="text-white hidden sm:block"
-                        weight="duotone"
-                      />
-                    </div>
+                      {user.email}
+                    </p>
                   )}
                 </div>
-                <span
-                  className="font-semibold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[200px] md:max-w-none"
-                  style={{ color: textColor }}
-                >
-                  {agent.name}
-                </span>
-                {agent.isActive === false && (
-                  <span className="text-xs px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded">
-                    Latest
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Temporary Badge + Theme Toggle + User Profile */}
-            <div className="flex items-center gap-3">
-              {isTesting && (
-                <span
-                  className="text-xs px-3 py-1.5 rounded-full"
-                  style={{
-                    backgroundColor: isDark ? "#374151" : "#e5e7eb",
-                    color: isDark ? "#d1d5db" : "#6b7280",
-                    border: `1px solid ${borderColor}`,
-                  }}
-                >
-                  Temporary
-                </span>
-              )}
-              {/* Theme Toggle - Only show if themeMode is 'system' */}
-              {showThemeToggle && (
                 <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-lg transition-colors focus:outline-none"
+                  onClick={handleSignOut}
+                  className="w-full px-3 py-2 text-left text-sm text-red-400 transition-colors flex items-center gap-2 focus:outline-none"
                   style={{ backgroundColor: "transparent" }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.backgroundColor = isDark
                       ? "#374151"
-                      : "#e5e7eb")
+                      : "#f3f4f6")
                   }
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor = "transparent")
                   }
-                  title={
-                    isDark ? "Switch to Light Mode" : "Switch to Dark Mode"
-                  }
                 >
-                  {isDark ? (
-                    <SunIcon
-                      size={20}
-                      weight="duotone"
-                      className="text-yellow-400"
-                    />
-                  ) : (
-                    <MoonIcon
-                      size={20}
-                      weight="duotone"
-                      className="text-indigo-400"
-                    />
-                  )}
+                  <SignOutIcon size={16} />
+                  Sign Out
                 </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chat Messages Area */}
+      <div className="flex-1 overflow-y-auto">
+        {messages.length === 0 && !currentMessage && !selectedThreadId ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-6">
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 overflow-hidden"
+              style={{ background: agentAvatar ? "transparent" : headerBg }}
+            >
+              {agentAvatar ? (
+                <img
+                  src={agentAvatar}
+                  alt={agent.name}
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover"
+                />
+              ) : (
+                <>
+                  <RobotIcon
+                    size={32}
+                    weight="duotone"
+                    className="text-white sm:hidden"
+                  />
+                  <RobotIcon
+                    size={40}
+                    weight="duotone"
+                    className="text-white hidden sm:block"
+                  />
+                </>
               )}
-              {user && (
-                <div className="relative group">
-                  <button className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden focus:outline-none">
-                    {user.photoURL ? (
+            </div>
+            <h2
+              className="text-xl sm:text-2xl font-bold mb-2"
+              style={{ color: textColor }}
+            >
+              {agent.name}
+            </h2>
+            <p
+              className="text-xs sm:text-sm max-w-sm sm:max-w-md mb-4 sm:mb-6 px-2"
+              style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+            >
+              {agent.description ||
+                "This AI assistant engages with you to understand your perspectives, challenges, and expectations about the current AI landscape."}
+            </p>
+            {agent.greetingMessage && (
+              <p
+                className="text-sm sm:text-base font-medium max-w-sm sm:max-w-md px-2"
+                style={{ color: textColor }}
+              >
+                {agent.greetingMessage}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="max-w-3xl mx-auto py-4 sm:py-6 px-3 sm:px-4 space-y-3 sm:space-y-4">
+            {messages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex gap-2 sm:gap-3 ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {msg.role === "assistant" && (
+                  <div
+                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                    style={{
+                      background: agentAvatar ? "transparent" : headerBg,
+                    }}
+                  >
+                    {agentAvatar ? (
+                      <img
+                        src={agentAvatar}
+                        alt={agent.name}
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <>
+                        <RobotIcon
+                          size={12}
+                          weight="duotone"
+                          className="text-white sm:hidden"
+                        />
+                        <RobotIcon
+                          size={16}
+                          weight="duotone"
+                          className="text-white hidden sm:block"
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+                <div
+                  className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
+                  style={{
+                    backgroundColor: msg.role === "user" ? userMsgBg : botMsgBg,
+                    color:
+                      msg.role === "user" ? userMsgTextColor : botMsgTextColor,
+                  }}
+                >
+                  <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </p>
+                </div>
+                {msg.role === "user" && (
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {user?.photoURL ? (
                       <img
                         src={user.photoURL}
                         alt={getUserDisplayName(user)}
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <UserIcon
-                        size={16}
-                        weight="bold"
-                        className="text-white"
-                      />
+                      <>
+                        <UserIcon
+                          size={12}
+                          weight="bold"
+                          className="text-white sm:hidden"
+                        />
+                        <UserIcon
+                          size={16}
+                          weight="bold"
+                          className="text-white hidden sm:block"
+                        />
+                      </>
                     )}
-                  </button>
-                  {/* Dropdown */}
-                  <div
-                    className="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-                    style={{
-                      backgroundColor: isDark ? "#1f2937" : "#ffffff",
-                      border: dividerBorder,
-                    }}
-                  >
-                    <div
-                      className="p-3"
-                      style={{ borderBottom: dividerBorder }}
-                    >
-                      <p
-                        className="text-sm font-medium truncate"
-                        style={{ color: textColor }}
-                      >
-                        {getUserDisplayName(user)}
-                      </p>
-                      {user.email && (
-                        <p
-                          className="text-xs truncate"
-                          style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                        >
-                          {user.email}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full px-3 py-2 text-left text-sm text-red-400 transition-colors flex items-center gap-2 focus:outline-none"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = isDark
-                          ? "#374151"
-                          : "#f3f4f6")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <SignOutIcon size={16} />
-                      Sign Out
-                    </button>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Chat Messages Area */}
-          <div className="flex-1 overflow-y-auto">
-            {messages.length === 0 && !currentMessage && !selectedThreadId ? (
-              <div className="h-full flex flex-col items-center justify-center text-center px-4 sm:px-6">
+                )}
+              </motion.div>
+            ))}
+            {/* Show typing indicator when streaming but no message yet */}
+            {streaming && !currentMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-2 sm:gap-3 justify-start"
+              >
                 <div
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 overflow-hidden"
-                  style={{ background: agentAvatar ? "transparent" : headerBg }}
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{
+                    background: agentAvatar ? "transparent" : headerBg,
+                  }}
                 >
                   {agentAvatar ? (
                     <img
                       src={agentAvatar}
                       alt={agent.name}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover"
+                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
                     />
                   ) : (
                     <>
                       <RobotIcon
-                        size={32}
+                        size={12}
                         weight="duotone"
                         className="text-white sm:hidden"
                       />
                       <RobotIcon
-                        size={40}
+                        size={16}
                         weight="duotone"
                         className="text-white hidden sm:block"
                       />
                     </>
                   )}
                 </div>
-                <h2
-                  className="text-xl sm:text-2xl font-bold mb-2"
-                  style={{ color: textColor }}
-                >
-                  {agent.name}
-                </h2>
-                <p
-                  className="text-xs sm:text-sm max-w-sm sm:max-w-md mb-4 sm:mb-6 px-2"
-                  style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                >
-                  {agent.description ||
-                    "This AI assistant engages with you to understand your perspectives, challenges, and expectations about the current AI landscape."}
-                </p>
-                {agent.greetingMessage && (
-                  <p
-                    className="text-sm sm:text-base font-medium max-w-sm sm:max-w-md px-2"
-                    style={{ color: textColor }}
-                  >
-                    {agent.greetingMessage}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="max-w-3xl mx-auto py-4 sm:py-6 px-3 sm:px-4 space-y-3 sm:space-y-4">
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-2 sm:gap-3 ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {msg.role === "assistant" && (
-                      <div
-                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                        style={{
-                          background: agentAvatar ? "transparent" : headerBg,
-                        }}
-                      >
-                        {agentAvatar ? (
-                          <img
-                            src={agentAvatar}
-                            alt={agent.name}
-                            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <>
-                            <RobotIcon
-                              size={12}
-                              weight="duotone"
-                              className="text-white sm:hidden"
-                            />
-                            <RobotIcon
-                              size={16}
-                              weight="duotone"
-                              className="text-white hidden sm:block"
-                            />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    <div
-                      className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
-                      style={{
-                        backgroundColor:
-                          msg.role === "user" ? userMsgBg : botMsgBg,
-                        color:
-                          msg.role === "user"
-                            ? userMsgTextColor
-                            : botMsgTextColor,
-                      }}
-                    >
-                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
-                    </div>
-                    {msg.role === "user" && (
-                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {user?.photoURL ? (
-                          <img
-                            src={user.photoURL}
-                            alt={getUserDisplayName(user)}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <>
-                            <UserIcon
-                              size={12}
-                              weight="bold"
-                              className="text-white sm:hidden"
-                            />
-                            <UserIcon
-                              size={16}
-                              weight="bold"
-                              className="text-white hidden sm:block"
-                            />
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-                {/* Show typing indicator when streaming but no message yet */}
-                {streaming && !currentMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-2 sm:gap-3 justify-start"
-                  >
-                    <div
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                      style={{
-                        background: agentAvatar ? "transparent" : headerBg,
-                      }}
-                    >
-                      {agentAvatar ? (
-                        <img
-                          src={agentAvatar}
-                          alt={agent.name}
-                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <>
-                          <RobotIcon
-                            size={12}
-                            weight="duotone"
-                            className="text-white sm:hidden"
-                          />
-                          <RobotIcon
-                            size={16}
-                            weight="duotone"
-                            className="text-white hidden sm:block"
-                          />
-                        </>
-                      )}
-                    </div>
-                    <div
-                      className="px-3 sm:px-4 py-2 sm:py-3 rounded-2xl"
-                      style={{ backgroundColor: botMsgBg }}
-                    >
-                      <TypingLoader dotColor={botMsgTextColor} size={6} />
-                    </div>
-                  </motion.div>
-                )}
-                {/* Show streaming message with typewriter effect */}
-                {currentMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-2 sm:gap-3 justify-start"
-                  >
-                    <div
-                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                      style={{
-                        background: agentAvatar ? "transparent" : headerBg,
-                      }}
-                    >
-                      {agentAvatar ? (
-                        <img
-                          src={agentAvatar}
-                          alt={agent.name}
-                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <>
-                          <RobotIcon
-                            size={12}
-                            weight="duotone"
-                            className="text-white sm:hidden"
-                          />
-                          <RobotIcon
-                            size={16}
-                            weight="duotone"
-                            className="text-white hidden sm:block"
-                          />
-                        </>
-                      )}
-                    </div>
-                    <div
-                      className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
-                      style={{
-                        backgroundColor: botMsgBg,
-                        color: botMsgTextColor,
-                      }}
-                    >
-                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                        {currentMessage}
-                        <motion.span
-                          animate={{ opacity: [1, 0] }}
-                          transition={{ duration: 0.8, repeat: Infinity }}
-                          className="inline-block ml-1"
-                        >
-                          ▋
-                        </motion.span>
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-
-          {/* Input Area or Archived Notice */}
-          <div
-            className="p-2 sm:p-4"
-            style={{
-              backgroundColor: chatBg,
-              borderTop: dividerBorder,
-            }}
-          >
-            {isCurrentSessionArchived ? (
-              // Archived chat notice
-              <div className="max-w-3xl mx-auto">
                 <div
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-3 sm:px-4 py-3 rounded-xl"
-                  style={{
-                    backgroundColor: isDark ? "#374151" : "#f3f4f6",
-                    border: dividerBorder,
-                  }}
+                  className="px-3 sm:px-4 py-2 sm:py-3 rounded-2xl"
+                  style={{ backgroundColor: botMsgBg }}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <ArchiveIcon
-                      size={18}
-                      className={isDark ? "text-gray-400" : "text-gray-600"}
-                    />
-                    <p
-                      className="text-xs sm:text-sm"
-                      style={{
-                        color: isDark ? "#9ca3af" : "#6b7280",
-                      }}
-                    >
-                      This conversation is archived. Unarchive to continue.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleUnarchiveSession(selectedThreadId!)}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors focus:outline-none"
-                    style={{
-                      backgroundColor: sendBtnBg,
-                      color: sendBtnTextColor,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = "0.9";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = "1";
-                    }}
-                  >
-                    Unarchive
-                  </button>
+                  <TypingLoader dotColor={botMsgTextColor} size={6} />
                 </div>
-              </div>
-            ) : (
-              // Regular input area
-              <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3 items-end">
-                <textarea
-                  value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Type a message..."
-                  rows={1}
-                  className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm resize-none focus:outline-none transition-colors"
-                  style={{
-                    minHeight: "44px",
-                    maxHeight: "120px",
-                    backgroundColor: inputBg,
-                    border: dividerBorder,
-                    color: inputTextColor,
-                  }}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!userMessage.trim() || streaming}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 focus:outline-none"
-                  style={{ backgroundColor: sendBtnBg }}
-                >
-                  <PaperPlaneRightIcon
-                    size={18}
-                    weight="fill"
-                    className="sm:hidden"
-                    style={{ color: sendBtnTextColor }}
-                  />
-                  <PaperPlaneRightIcon
-                    size={20}
-                    weight="fill"
-                    className="hidden sm:block"
-                    style={{ color: sendBtnTextColor }}
-                  />
-                </button>
-              </div>
+              </motion.div>
             )}
+            {/* Show streaming message with typewriter effect */}
+            {currentMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-2 sm:gap-3 justify-start"
+              >
+                <div
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{
+                    background: agentAvatar ? "transparent" : headerBg,
+                  }}
+                >
+                  {agentAvatar ? (
+                    <img
+                      src={agentAvatar}
+                      alt={agent.name}
+                      className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <RobotIcon
+                        size={12}
+                        weight="duotone"
+                        className="text-white sm:hidden"
+                      />
+                      <RobotIcon
+                        size={16}
+                        weight="duotone"
+                        className="text-white hidden sm:block"
+                      />
+                    </>
+                  )}
+                </div>
+                <div
+                  className="max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl"
+                  style={{
+                    backgroundColor: botMsgBg,
+                    color: botMsgTextColor,
+                  }}
+                >
+                  <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                    {currentMessage}
+                    <motion.span
+                      animate={{ opacity: [1, 0] }}
+                      transition={{ duration: 0.8, repeat: Infinity }}
+                      className="inline-block ml-1"
+                    >
+                      ▋
+                    </motion.span>
+                  </p>
+                </div>
+              </motion.div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {/* Input Area or Archived Notice */}
+      <div
+        className="p-2 sm:p-4"
+        style={{
+          backgroundColor: chatBg,
+          borderTop: dividerBorder,
+        }}
+      >
+        {isCurrentSessionArchived ? (
+          // Archived chat notice
+          <div className="max-w-3xl mx-auto">
+            <div
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-3 sm:px-4 py-3 rounded-xl"
+              style={{
+                backgroundColor: isDark ? "#374151" : "#f3f4f6",
+                border: dividerBorder,
+              }}
+            >
+              <div className="flex items-center gap-2 sm:gap-3">
+                <ArchiveIcon
+                  size={18}
+                  className={isDark ? "text-gray-400" : "text-gray-600"}
+                />
+                <p
+                  className="text-xs sm:text-sm"
+                  style={{
+                    color: isDark ? "#9ca3af" : "#6b7280",
+                  }}
+                >
+                  This conversation is archived. Unarchive to continue.
+                </p>
+              </div>
+              <button
+                onClick={() => handleUnarchiveSession(selectedThreadId!)}
+                className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors focus:outline-none"
+                style={{
+                  backgroundColor: sendBtnBg,
+                  color: sendBtnTextColor,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
+              >
+                Unarchive
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Regular input area
+          <div className="max-w-3xl mx-auto flex gap-2 sm:gap-3 items-end">
+            <textarea
+              value={userMessage}
+              onChange={(e) => setUserMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Type a message..."
+              rows={1}
+              className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm resize-none focus:outline-none transition-colors"
+              style={{
+                minHeight: "44px",
+                maxHeight: "120px",
+                backgroundColor: inputBg,
+                border: dividerBorder,
+                color: inputTextColor,
+              }}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!userMessage.trim() || streaming}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 focus:outline-none"
+              style={{ backgroundColor: sendBtnBg }}
+            >
+              <PaperPlaneRightIcon
+                size={18}
+                weight="fill"
+                className="sm:hidden"
+                style={{ color: sendBtnTextColor }}
+              />
+              <PaperPlaneRightIcon
+                size={20}
+                weight="fill"
+                className="hidden sm:block"
+                style={{ color: sendBtnTextColor }}
+              />
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
-}
+};

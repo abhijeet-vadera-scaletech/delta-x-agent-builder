@@ -72,7 +72,6 @@ export const signInAnonymous = async (): Promise<User> => {
 export const signInWithGoogle = async (): Promise<User> => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    console.log("🚀 ~ signInWithGoogle ~ result:", result);
     return result.user;
   } catch (error) {
     const authError = error as AuthError;

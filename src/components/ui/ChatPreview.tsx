@@ -73,7 +73,6 @@ export function ChatPreview({
   agentName = "AI Assistant",
   messages = defaultMessages,
 }: ChatPreviewProps) {
-  console.log("🚀 ~ ChatPreview ~ config:", config);
   const sizes = sizeConfig[size];
 
   // Determine which theme to use based on themeMode
@@ -94,15 +93,16 @@ export function ChatPreview({
 
   const borderColor = isDark ? "#374151" : "#e5e7eb";
   const textColor = isDark ? "#ffffff" : "#1f2937";
-  console.log("🚀 ~ ChatPreview ~ textColor:", textColor);
 
   // Full screen mode
   if (fullScreen) {
     return (
       <div
-        className={`h-full flex flex-col overflow-hidden ${className}`}
+        className={`h-full flex flex-col overflow-hidden rounded-md ${className}`}
         style={{
           backgroundColor: theme.chatBackgroundColor,
+          border: borderStyle,
+          borderColor,
         }}
       >
         {/* Top Header */}
@@ -110,7 +110,8 @@ export function ChatPreview({
           className="h-14 flex items-center justify-between px-4 flex-shrink-0"
           style={{
             backgroundColor: theme.chatBackgroundColor,
-            borderBottom: `1px solid ${borderColor}`,
+            borderBottom: borderStyle,
+            borderBottomColor: borderColor,
           }}
         >
           {/* Left: Agent Name */}
@@ -216,7 +217,8 @@ export function ChatPreview({
             className="p-4 flex-shrink-0"
             style={{
               backgroundColor: theme.chatBackgroundColor,
-              borderTop: `1px solid ${borderColor}`,
+              borderTop: borderStyle,
+              borderTopColor: borderColor,
             }}
           >
             <div className="max-w-3xl mx-auto flex gap-3 items-end">
@@ -225,7 +227,8 @@ export function ChatPreview({
                 style={{
                   backgroundColor: theme.inputBackgroundColor,
                   color: theme.inputTextColor,
-                  border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+                  border: borderStyle,
+                  borderColor,
                 }}
               >
                 <span className="opacity-50">Hello</span>
@@ -332,7 +335,8 @@ export function ChatPreview({
               style={{
                 backgroundColor: theme.inputBackgroundColor,
                 color: theme.inputTextColor,
-                border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+                border: borderStyle,
+                borderColor,
               }}
             >
               <span className="opacity-50">Hello</span>

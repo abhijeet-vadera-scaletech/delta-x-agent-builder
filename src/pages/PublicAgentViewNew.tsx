@@ -438,15 +438,15 @@ export default function PublicAgentViewNew({
 
   // Default theme colors
   const defaultLight = {
-    inputTextColor: "#ffffff",
+    inputTextColor: "#000000",
     headerGradientEnd: "#3d3d3d",
     chatBackgroundColor: "#ffffff",
     headerGradientStart: "#000000",
     sendButtonTextColor: "#ffffff",
-    inputBackgroundColor: "#000000",
+    inputBackgroundColor: "#ffffff",
     senderMessageTextColor: "#ffffff",
     incomingMessageTextColor: "#000000",
-    sendButtonBackgroundColor: "#000000",
+    sendButtonBackgroundColor: "#386aff",
     senderMessageBackgroundColor: "#000000",
     incomingMessageBackgroundColor: "#e3e3e3",
   };
@@ -460,9 +460,9 @@ export default function PublicAgentViewNew({
     inputBackgroundColor: "#000000",
     senderMessageTextColor: "#ffffff",
     incomingMessageTextColor: "#000000",
-    sendButtonBackgroundColor: "#4d70ff",
-    senderMessageBackgroundColor: "#525dff",
-    incomingMessageBackgroundColor: "#ffffff",
+    sendButtonBackgroundColor: "#386aff",
+    senderMessageBackgroundColor: "#386aff",
+    incomingMessageBackgroundColor: "#e3e3e3",
   };
 
   // Theme Mode

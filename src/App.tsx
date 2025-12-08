@@ -19,7 +19,6 @@ import {
 import Layout from "./components/Layout";
 import { NetworkGoldWidget } from "./components/NetworkGoldWidget";
 import RouteInspector from "./components/RouteInspector";
-import { AppProvider } from "./context/AppContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import AgentBuilder from "./pages/AgentBuilder";
@@ -147,9 +146,7 @@ function App() {
     <Router>
       <ThemeProvider>
         <AuthProvider>
-          <AppProvider>
-            <AppContent />
-          </AppProvider>
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </Router>

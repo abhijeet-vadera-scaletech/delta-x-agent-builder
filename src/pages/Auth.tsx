@@ -13,6 +13,7 @@ import {
   UserPlus,
   Eye,
   EyeSlash,
+  RobotIcon,
 } from "@phosphor-icons/react";
 import {
   getGradient,
@@ -144,7 +145,7 @@ export default function Auth() {
             whileHover={{ scale: 1.05, rotate: 360 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
           >
-            C
+            <RobotIcon weight="duotone" />
           </motion.div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             DeltaX Platform
